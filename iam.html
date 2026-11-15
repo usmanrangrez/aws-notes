@@ -177,6 +177,12 @@ ul.check{padding-left:0;margin:12px 0}
 .check li::before{content:"";position:absolute;left:2px;top:13px;width:14px;height:14px;border:1.5px solid var(--accent);border-radius:2px}
 .check li::after{content:"";position:absolute;left:7px;top:15px;width:4px;height:8px;border:solid var(--accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
 
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:2px;margin:48px 0 0}
+.pager a{display:block;padding:16px 18px;text-decoration:none;color:var(--ink);font:600 15px/1.4 var(--mono);transition:background-color .2s}
+.pager a:hover{background:var(--surface)}
+.pager a+a{border-left:1px solid var(--line)}
+.pager .next{text-align:right}
+.pager span{display:block;font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
 ul{padding-left:1.2em}
 li{margin:.25em 0}
 footer{color:var(--muted);font:400 13px/1.6 var(--sans);border-top:1px solid var(--line);padding-top:24px;margin-top:40px}
@@ -1236,15 +1242,19 @@ aws configure sso</pre></div>
     <li><a href="https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/">Changelog: immutable subject claims for OIDC tokens</a></li>
     <li><a href="https://github.com/aws-actions/configure-aws-credentials">aws-actions/configure-aws-credentials</a> and <a href="https://github.com/aws-actions/configure-aws-credentials/issues/1137">issue #1137</a> (the "Not authorized" error)</li>
   </ul>
-  <h3>Learning resources I used</h3>
+  <h3>Courses this series follows</h3>
   <ul>
-    <li>M Prashant: <i>AWS in One Video for Beginners</i> (Hindi, YouTube)</li>
-    <li>Abhishek Veeramalla: <i>AWS Zero to Hero</i> playlist (YouTube)</li>
+    <li>Chapter order follows M Prashant's <a href="https://www.youtube.com/watch?v=N4sJj-SxX00">AWS in ONE VIDEO for Beginners</a> (Hindi). The IAM part starts at <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=2621s">43:41</a>. These notes and labs are my own write-up, not a transcript of the video.</li>
+    <li>Extra topics come from M Prashant's <a href="https://www.youtube.com/playlist?list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl">AWS for Beginners playlist</a>, Abhishek Veeramalla's <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">AWS Zero to Hero</a> (IAM: Day 2) and Boot.dev's <a href="https://www.youtube.com/watch?v=UcxXSHDDUE8">Full AWS DevOps Course</a> (IAM: <a href="https://www.youtube.com/watch?v=UcxXSHDDUE8&amp;t=8994s">2:29:54</a>).</li>
   </ul>
 </section>
 
+<nav class="pager" aria-label="Chapter navigation">
+  <a href="cloud-basics.html"><span>← Previous</span>00 · Cloud &amp; AWS basics</a>
+  <a href="index.html#ch-02" class="next"><span>Next →</span>02 · AWS CLI configuration</a>
+</nav>
 <footer>
-  <p><b>AWS Notes · Chapter 1 · IAM</b> · Written by <a href="https://github.com/usmanrangrez">@usmanrangrez</a> after doing every lab in a real account, 15 Nov 2026. Next chapter: EC2.</p>
+  <p><b>AWS Notes · Chapter 1 · IAM</b> · Written by <a href="https://github.com/usmanrangrez">@usmanrangrez</a> after doing every lab in a real account, 15 Nov 2026.</p>
   <p>Written with help from Claude (an AI assistant), and every lab was run and checked by hand. Not affiliated with or endorsed by Amazon Web Services. Found a mistake? <a href="https://github.com/usmanrangrez/aws-notes/issues">Open an issue</a>.</p>
 </footer>
 </main>

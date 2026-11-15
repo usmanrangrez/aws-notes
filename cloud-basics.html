@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud &amp; AWS Basics: Virtualization, Cloud Computing, Regions and Your First Account · AWS Notes</title>
+<meta name="description" content="Chapter 00 of AWS Notes: virtualization and hypervisors, cloud computing (IaaS, PaaS, SaaS), AWS regions and availability zones, shared responsibility, and opening an AWS account safely on the Free plan.">
+<meta name="author" content="usmanrangrez">
+<link rel="canonical" href="https://usmanrangrez.github.io/aws-notes/cloud-basics.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cloud &amp; AWS Basics: From Virtualization to Your First Account">
+<meta property="og:description" content="Virtualization, cloud models, AWS regions and AZs, and a safe account setup. Chapter 00 of AWS Notes.">
+<meta property="og:url" content="https://usmanrangrez.github.io/aws-notes/cloud-basics.html">
+<meta property="og:image" content="https://usmanrangrez.github.io/aws-notes/og-iam.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#ffffff; --surface:#f8fafc; --panel:#ffffff; --ink:#0f172a; --ink-2:#1e293b; --muted:#475569; --line:#e2e8f0; --line-strong:#cbd5e1;
+  --accent:#15803d; --accent-soft:#f0fdf4; --red:#b91c1c; --red-soft:#fef2f2;
+  --code-bg:#0f172a; --code-ink:#e2e8f0; --code-line:#1e293b; --ring:#15803d;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --side-w:288px; --measure:840px;
+}
+html[data-theme="dark"]{
+  --bg:#020617; --surface:#0e1223; --panel:#0e1223; --ink:#f8fafc; --ink-2:#e2e8f0; --muted:#94a3b8; --line:#1e293b; --line-strong:#334155;
+  --accent:#22c55e; --accent-soft:#052e16; --red:#f87171; --red-soft:#2a0b0b;
+  --code-bg:#0b1020; --code-line:#1e293b; --ring:#22c55e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;font:400 16px/1.65 var(--sans);background:var(--bg);color:var(--ink);text-rendering:optimizeLegibility}
+a{color:var(--accent);text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:2px}
+button,summary,a{cursor:pointer}
+code,pre,kbd{font-family:var(--mono)}
+:not(pre)>code{background:var(--surface);color:var(--ink-2);border:1px solid var(--line);padding:.05em .35em;border-radius:3px;font-size:.84em;overflow-wrap:anywhere}
+::selection{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+
+/* ---------- sidebar ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:var(--side-w);background:var(--bg);border-right:1px solid var(--line);overflow-y:auto;padding:28px 20px 40px;z-index:5}
+.side .brand{font:700 15px/1 var(--mono);letter-spacing:-.01em;color:var(--ink);margin:0 8px 6px;display:flex;align-items:center;gap:8px}
+.side .brand span.logo{display:inline-block;background:var(--ink);color:var(--bg);font:700 11px/1 var(--mono);padding:5px 6px;border-radius:2px;letter-spacing:.04em}
+.side .sub{font:400 12px/1.4 var(--mono);color:var(--muted);margin:0 8px 22px}
+.side nav a{display:flex;gap:10px;align-items:baseline;color:var(--muted);text-decoration:none;padding:7px 8px;font-size:14px;line-height:1.35;border-left:2px solid transparent;transition:color .2s,border-color .2s,background-color .2s}
+.side nav a:hover{color:var(--ink);background:var(--surface)}
+.side nav a.active{color:var(--ink);border-left-color:var(--accent);background:var(--surface);font-weight:500}
+.side nav .grp{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 8px 8px}
+.toc-num{font:500 12px/1 var(--mono);color:var(--muted);min-width:20px}
+.side nav a.active .toc-num{color:var(--accent)}
+.side .tools{margin:26px 8px 0;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink);border-radius:4px;padding:6px 12px;font:500 13px/1 var(--sans);transition:background-color .2s,border-color .2s}
+.btn:hover{background:var(--surface);border-color:var(--ink)}
+.btn svg{width:15px;height:15px}
+main{margin-left:var(--side-w);padding:56px clamp(20px,5vw,72px) 120px}
+main>*{max-width:var(--measure)}
+.menu-btn{display:none}
+@media (max-width:960px){
+  .side{transform:translateX(-100%);transition:transform .25s ease-out;box-shadow:none}
+  body.nav-open .side{transform:none;box-shadow:0 0 0 100vmax rgba(2,6,23,.35)}
+  main{margin-left:0;padding-top:76px}
+  .menu-btn{display:inline-flex;position:fixed;top:14px;left:14px;z-index:6;min-height:44px}
+}
+
+/* ---------- type ---------- */
+h1,h2{font-family:var(--mono);letter-spacing:-.02em;color:var(--ink)}
+h1{font-size:clamp(1.9rem,3.6vw,2.6rem);line-height:1.15;font-weight:700;margin:0 0 16px;text-wrap:balance}
+h2{font-size:clamp(1.35rem,2.2vw,1.6rem);line-height:1.25;font-weight:700;margin:0 0 16px;text-wrap:balance}
+h3{font:600 1.12rem/1.35 var(--sans);margin:36px 0 10px;color:var(--ink)}
+h4{font:600 1rem/1.4 var(--sans);margin:22px 0 8px}
+p{margin:.6em 0}
+section{padding:48px 0 8px;border-top:1px solid var(--line);margin:0 0 8px;scroll-margin-top:16px}
+.kicker{display:block;font:600 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.kicker::before{content:"§ ";color:var(--accent)}
+.lead{font-size:1.125rem;line-height:1.6;color:var(--muted);max-width:680px;margin:0}
+.muted{color:var(--muted)}
+
+/* ---------- header ---------- */
+.hero{border-top:none;padding:0 0 36px}
+.hero .kicker::before{content:""}
+.hero .pills{display:flex;flex-wrap:wrap;gap:6px;margin:24px 0 0;padding:0;list-style:none}
+.pill{font:500 12px/1 var(--mono);color:var(--ink-2);border:1px solid var(--line-strong);border-radius:2px;padding:6px 8px;white-space:nowrap}
+.hero .note{margin-top:22px;font-size:14px;color:var(--muted);border-left:2px solid var(--line-strong);padding-left:12px}
+.meta{display:flex;flex-wrap:wrap;gap:0;margin:22px 0 0;border:1px solid var(--line);border-radius:2px}
+.meta div{padding:12px 16px;border-right:1px solid var(--line);flex:1 1 120px}
+.meta div:last-child{border-right:none}
+.meta b{display:block;font:700 20px/1.2 var(--mono);color:var(--ink)}
+.meta span{font-size:12px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+
+/* ---------- tables ---------- */
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:2px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
+th,td{border-bottom:1px solid var(--line);padding:10px 14px;text-align:left;vertical-align:top}
+th{background:var(--surface);font:600 11.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td:first-child{font-weight:500}
+.st{display:inline-flex;align-items:center;gap:5px;font:600 12px/1 var(--mono);padding:4px 7px;border-radius:2px;white-space:nowrap;border:1px solid}
+.st.ok{color:var(--accent);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.st.no{color:var(--red);background:var(--red-soft);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+.ok{color:var(--accent);font-weight:600}.no{color:var(--red);font-weight:600}
+
+/* ---------- code ---------- */
+.code{position:relative;margin:16px 0;border:1px solid var(--code-line);border-radius:4px;background:var(--code-bg)}
+.code pre{color:var(--code-ink);padding:38px 18px 16px;overflow-x:auto;font-size:13px;line-height:1.6;margin:0;tab-size:2}
+.code .lang{position:absolute;top:0;left:0;font:600 10.5px/1 var(--mono);color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;padding:9px 18px;border-bottom:1px solid var(--code-line);border-right:1px solid var(--code-line)}
+.code .copy{position:absolute;top:4px;right:6px;min-height:26px;font:500 11px/1 var(--mono);padding:6px 10px;background:transparent;color:#cbd5e1;border:1px solid #334155;border-radius:3px;transition:background-color .2s}
+.code .copy:hover{background:#1e293b}
+.c-k{color:#93c5fd}.c-s{color:#86efac}.c-c{color:#64748b;font-style:italic}.c-g{color:#4ade80;font-weight:600}.c-r{color:#fca5a5;font-weight:600}
+
+/* ---------- callouts ---------- */
+.call{margin:18px 0;padding:14px 18px;border:1px solid var(--line);border-left:3px solid var(--ink);background:var(--surface);border-radius:0 2px 2px 0}
+.call::before{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;color:var(--muted)}
+.call.tip::before{content:"Note"}
+.call.warn{border-left-color:var(--red)}.call.warn::before{content:"Warning";color:var(--red)}
+.call.prod{border-left-color:var(--accent)}.call.prod::before{content:"In production";color:var(--accent)}
+.call.int::before{content:"Interview"}
+.call.lesson{border-left-color:var(--accent);background:var(--accent-soft)}.call.lesson::before{content:"Key lesson";color:var(--accent)}
+.call>b:first-child{display:block;margin-bottom:2px;font-weight:600}
+.call p{margin:.35em 0}
+
+/* ---------- cards ---------- */
+.grid{display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:18px 0;border:1px solid var(--line);border-radius:2px}
+.card{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0}
+.card h4{margin:0 0 6px;font:600 13px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.card p{margin:0;color:var(--muted);font-size:14.5px}
+
+/* ---------- labs ---------- */
+.lab{border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:0 0 2px 2px;padding:4px 22px 16px;margin:26px 0}
+.lab>.tag{display:inline-block;font:700 11px/1 var(--mono);letter-spacing:.1em;color:var(--accent);margin-top:16px}
+ol.steps{counter-reset:s;list-style:none;padding-left:0;margin:10px 0}
+ol.steps>li{counter-increment:s;position:relative;padding-left:42px;margin:14px 0}
+ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:1px;font:600 13px/1 var(--mono);color:var(--accent);border:1px solid var(--line-strong);padding:5px 5px;border-radius:2px;min-width:30px;text-align:center}
+
+/* ---------- diagrams ---------- */
+figure{margin:22px 0}
+figure svg{width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:2px}
+figcaption{font:400 13px/1.5 var(--mono);color:var(--muted);margin-top:8px}
+figcaption::before{content:"Fig. ";color:var(--accent)}
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .box,svg .b-blue,svg .b-acc,svg .b-pur{fill:var(--panel);stroke:var(--line-strong);stroke-width:1.25}
+svg .b-acc{stroke:var(--ink);stroke-width:1.25}
+svg .b-pur{stroke:var(--ink);stroke-dasharray:4 3}
+svg .b-green{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .b-red{fill:var(--red-soft);stroke:var(--red);stroke-width:1.5}
+svg rect{rx:3px}
+svg .ln{stroke:var(--muted);stroke-width:1.4;fill:none}
+svg .ln-g{stroke:var(--accent);stroke-width:1.6;fill:none}
+svg .ln-r{stroke:var(--red);stroke-width:1.6;fill:none}
+svg .sm{font-size:12px;fill:var(--muted)}
+svg .t-b{font-weight:600}
+svg .mono{font-family:var(--mono);font-size:11.5px}
+
+/* ---------- arn ---------- */
+.arn{display:flex;flex-wrap:wrap;gap:0;font:500 14px/1 var(--mono);margin:16px 0;border:1px solid var(--line);border-radius:2px;width:fit-content;max-width:100%}
+.arn span{padding:12px 10px 26px;position:relative;border-right:1px solid var(--line)}
+.arn span:last-child{border-right:none}
+.arn span i{position:absolute;left:10px;bottom:7px;font:400 10.5px/1 var(--sans);color:var(--muted);white-space:nowrap}
+.arn .sep{padding:12px 2px 26px;color:var(--accent);border-right:1px solid var(--line)}
+
+/* ---------- details ---------- */
+details{border-bottom:1px solid var(--line);padding:0;margin:0}
+details:first-of-type{border-top:1px solid var(--line)}
+details summary{list-style:none;font-weight:600;padding:14px 32px 14px 0;position:relative;min-height:44px}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";position:absolute;right:4px;top:12px;font:500 18px/1 var(--mono);color:var(--muted);transition:transform .2s}
+details[open] summary::after{content:"–"}
+details>p{margin:0 0 16px;color:var(--ink-2)}
+
+/* ---------- checklist ---------- */
+ul.check{padding-left:0;margin:12px 0}
+.check li{list-style:none;margin:0;padding:9px 0 9px 30px;position:relative;border-bottom:1px solid var(--line)}
+.check li:last-child{border-bottom:none}
+.check li::before{content:"";position:absolute;left:2px;top:13px;width:14px;height:14px;border:1.5px solid var(--accent);border-radius:2px}
+.check li::after{content:"";position:absolute;left:7px;top:15px;width:4px;height:8px;border:solid var(--accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:2px;margin:48px 0 0}
+.pager a{display:block;padding:16px 18px;text-decoration:none;color:var(--ink);font:600 15px/1.4 var(--mono);transition:background-color .2s}
+.pager a:hover{background:var(--surface)}
+.pager a+a{border-left:1px solid var(--line)}
+.pager .next{text-align:right}
+.pager span{display:block;font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+ul{padding-left:1.2em}
+li{margin:.25em 0}
+footer{color:var(--muted);font:400 13px/1.6 var(--sans);border-top:1px solid var(--line);padding-top:24px;margin-top:40px}
+footer p{margin:.4em 0}
+.byline{font:400 13px/1.5 var(--mono);color:var(--muted);margin:14px 0 0}
+.byline a{color:var(--ink)}
+@media print{.side,.menu-btn,.copy{display:none}main{margin:0;padding:0}section{break-inside:auto}.code{break-inside:avoid}}
+</style>
+</head>
+<body>
+<button class="btn menu-btn" aria-label="Open navigation" onclick="document.body.classList.toggle('nav-open')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
+<aside class="side">
+  <div class="brand"><span class="logo">AWS</span>notes/</div>
+  <div class="sub">ch.00 — cloud basics</div>
+  <nav id="toc">
+    <a href="index.html"><span class="toc-num">←</span>All chapters</a>
+    <a href="#virt"><span class="toc-num">01</span>Virtualization</a>
+    <a href="#cloud"><span class="toc-num">02</span>Cloud computing</a>
+    <a href="#aws"><span class="toc-num">03</span>What is AWS?</a>
+    <a href="#account"><span class="toc-num">04</span>Lab · Open an account</a>
+    <a href="#interview"><span class="toc-num">05</span>Interview Q&amp;A</a>
+    <a href="#refs"><span class="toc-num">06</span>References &amp; videos</a>
+    <a href="iam.html"><span class="toc-num">→</span>Next: 01 · IAM</a>
+  </nav>
+  <div class="tools">
+    <button class="btn" id="theme" aria-label="Toggle light or dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Theme</button>
+    <button class="btn" onclick="window.print()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+  </div>
+</aside>
+<main>
+<section class="hero">
+  <span class="kicker">AWS Notes / Chapter 00</span>
+  <h1>Cloud &amp; AWS Basics: From Virtualization to Your First Account</h1>
+  <p class="lead">Before IAM, EC2 or anything else, it helps to know what the cloud actually is underneath: virtual machines on someone else's hardware, rented by the second. This chapter covers virtualization, cloud computing, how AWS is organised around the world, and how to open an account safely.</p>
+  <p class="byline">By <a href="https://github.com/usmanrangrez">@usmanrangrez</a> · Published 15 Nov 2026 · Facts last checked Nov 2026 · About 20 min to read</p>
+  <div class="meta"><div><b>5</b><span>sections</span></div><div><b>1</b><span>lab</span></div><div><b>4</b><span>diagrams</span></div><div><b>10</b><span>interview Qs</span></div></div>
+  <p class="note">This chapter follows M Prashant's <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=423s">AWS in One Video, 07:03–43:41</a> (virtualization → account setup). The text is my own write-up, not a transcript.</p>
+</section>
+
+<!-- 1 -->
+<section id="virt">
+  <span class="kicker">01</span>
+  <h2>Virtualization</h2>
+  <p><b>Virtualization</b> lets one physical computer act like many separate computers. A thin layer of software called a <b>hypervisor</b> splits the real CPU, memory, disk and network into slices, and each slice runs its own operating system as a <b>virtual machine (VM)</b>.</p>
+  <p>Without it, one server runs one OS and one app, often using 10–20% of its capacity. With it, the same server runs ten isolated VMs for ten different customers. That's the economic trick the whole cloud is built on.</p>
+
+  <h3>Two types of hypervisor</h3>
+  <figure>
+    <svg viewBox="0 0 760 260" role="img" aria-label="Type 1 vs Type 2 hypervisor stacks">
+      <text x="190" y="24" text-anchor="middle" class="t-b">Type 1 · bare-metal</text>
+      <rect class="b-green" x="40" y="40" width="90" height="44"/><text x="85" y="67" text-anchor="middle" class="sm">VM 1</text>
+      <rect class="b-green" x="145" y="40" width="90" height="44"/><text x="190" y="67" text-anchor="middle" class="sm">VM 2</text>
+      <rect class="b-green" x="250" y="40" width="90" height="44"/><text x="295" y="67" text-anchor="middle" class="sm">VM 3</text>
+      <rect class="b-acc" x="40" y="98" width="300" height="44"/><text x="190" y="125" text-anchor="middle" class="t-b">Hypervisor</text>
+      <rect class="box" x="40" y="156" width="300" height="44"/><text x="190" y="183" text-anchor="middle">Physical hardware</text>
+      <text x="190" y="228" text-anchor="middle" class="sm">ESXi · Hyper-V · KVM · Xen · AWS Nitro</text>
+
+      <text x="570" y="24" text-anchor="middle" class="t-b">Type 2 · hosted</text>
+      <rect class="b-green" x="420" y="40" width="140" height="44"/><text x="490" y="67" text-anchor="middle" class="sm">VM 1</text>
+      <rect class="b-green" x="580" y="40" width="140" height="44"/><text x="650" y="67" text-anchor="middle" class="sm">VM 2</text>
+      <rect class="b-acc" x="420" y="92" width="300" height="34"/><text x="570" y="114" text-anchor="middle" class="t-b">Hypervisor app</text>
+      <rect class="box" x="420" y="132" width="300" height="34"/><text x="570" y="154" text-anchor="middle">Host OS (Windows / macOS)</text>
+      <rect class="box" x="420" y="172" width="300" height="34"/><text x="570" y="194" text-anchor="middle">Physical hardware</text>
+      <text x="570" y="228" text-anchor="middle" class="sm">VirtualBox · VMware Workstation · Parallels</text>
+    </svg>
+    <figcaption>Type 1 runs directly on the hardware (servers, the cloud). Type 2 runs as an app on your laptop's OS.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <tr><th></th><th>Type 1 (bare-metal)</th><th>Type 2 (hosted)</th></tr>
+    <tr><td>Runs on</td><td>The hardware directly</td><td>An existing OS</td></tr>
+    <tr><td>Performance</td><td>Near-native</td><td>Slower (extra OS layer)</td></tr>
+    <tr><td>Used for</td><td>Data centres, the cloud</td><td>Learning, testing on a laptop</td></tr>
+    <tr><td>Examples</td><td>VMware ESXi, Hyper-V, KVM, Xen, <b>AWS Nitro</b></td><td>VirtualBox, VMware Workstation</td></tr>
+  </table></div>
+  <div class="call prod"><b>Where this shows up in AWS</b><p>Every <b>EC2 instance is a VM</b>. Modern instances run on the <b>AWS Nitro System</b>, a lightweight Type 1 hypervisor helped by dedicated hardware cards, so almost all of the server's power goes to your VM. When you pick an instance type like <code>t3.micro</code>, you're choosing the size of your slice.</p></div>
+
+  <h3>VMs vs containers</h3>
+  <div class="tbl"><table>
+    <tr><th></th><th>Virtual machine</th><th>Container</th></tr>
+    <tr><td>Isolates</td><td>A whole OS (own kernel)</td><td>Just the app and its libraries (shares the host kernel)</td></tr>
+    <tr><td>Size</td><td>GBs</td><td>MBs</td></tr>
+    <tr><td>Starts in</td><td>Tens of seconds to minutes</td><td>Seconds or less</td></tr>
+    <tr><td>Isolation</td><td>Stronger</td><td>Lighter</td></tr>
+    <tr><td>On AWS</td><td>EC2</td><td>ECS, EKS, Fargate (later chapters)</td></tr>
+  </table></div>
+  <p class="muted">In practice they're combined: containers usually run <i>inside</i> VMs.</p>
+</section>
+
+<!-- 2 -->
+<section id="cloud">
+  <span class="kicker">02</span>
+  <h2>Cloud computing</h2>
+  <p><b>Cloud computing</b> is renting computing (servers, storage, databases, networking, software) over the internet, <b>on demand</b>, and <b>paying only for what you use</b>. Instead of buying servers, you create them with a click or an API call and delete them when you're done.</p>
+
+  <h3>Own data centre vs cloud</h3>
+  <div class="tbl"><table>
+    <tr><th></th><th>Own data centre (on-premises)</th><th>Cloud</th></tr>
+    <tr><td>Getting a server</td><td>Order hardware, wait weeks</td><td>Minutes, from the console or code</td></tr>
+    <tr><td>Paying</td><td>Big upfront purchase (<b>CapEx</b>)</td><td>Pay as you go (<b>OpEx</b>)</td></tr>
+    <tr><td>Capacity</td><td>Guess peak demand, often over-buy</td><td>Scale up and down with demand</td></tr>
+    <tr><td>Going global</td><td>Build in each country</td><td>Pick another region</td></tr>
+    <tr><td>Maintenance</td><td>You fix power, cooling, disks</td><td>The provider does</td></tr>
+  </table></div>
+
+  <h3>The five essential characteristics (NIST definition)</h3>
+  <div class="grid">
+    <div class="card"><h4>On-demand self-service</h4><p>You create resources yourself, with no ticket or phone call.</p></div>
+    <div class="card"><h4>Broad network access</h4><p>Reachable over the internet from anywhere.</p></div>
+    <div class="card"><h4>Resource pooling</h4><p>Many customers share the same hardware, safely isolated (virtualization).</p></div>
+    <div class="card"><h4>Rapid elasticity</h4><p>Scale out at peak, scale in at night.</p></div>
+    <div class="card"><h4>Measured service</h4><p>Usage is metered, so you pay per second, GB or request.</p></div>
+  </div>
+
+  <h3>Service models: who manages what</h3>
+  <figure>
+    <svg viewBox="0 0 760 330" role="img" aria-label="Responsibility split for on-premises, IaaS, PaaS and SaaS">
+      <text x="120" y="24" text-anchor="middle" class="t-b">On-premises</text>
+      <text x="300" y="24" text-anchor="middle" class="t-b">IaaS</text>
+      <text x="480" y="24" text-anchor="middle" class="t-b">PaaS</text>
+      <text x="660" y="24" text-anchor="middle" class="t-b">SaaS</text>
+      <!-- rows: App, Data, Runtime, OS, Virtualization, Servers/Storage/Network -->
+      <g class="sm">
+      <rect class="b-green" x="40" y="36" width="160" height="38"/><text x="120" y="60" text-anchor="middle">Application</text>
+      <rect class="b-green" x="40" y="78" width="160" height="38"/><text x="120" y="102" text-anchor="middle">Data</text>
+      <rect class="b-green" x="40" y="120" width="160" height="38"/><text x="120" y="144" text-anchor="middle">Runtime</text>
+      <rect class="b-green" x="40" y="162" width="160" height="38"/><text x="120" y="186" text-anchor="middle">Operating system</text>
+      <rect class="b-green" x="40" y="204" width="160" height="38"/><text x="120" y="228" text-anchor="middle">Virtualization</text>
+      <rect class="b-green" x="40" y="246" width="160" height="38"/><text x="120" y="270" text-anchor="middle">Servers · storage · network</text>
+
+      <rect class="b-green" x="220" y="36" width="160" height="38"/><text x="300" y="60" text-anchor="middle">Application</text>
+      <rect class="b-green" x="220" y="78" width="160" height="38"/><text x="300" y="102" text-anchor="middle">Data</text>
+      <rect class="b-green" x="220" y="120" width="160" height="38"/><text x="300" y="144" text-anchor="middle">Runtime</text>
+      <rect class="b-green" x="220" y="162" width="160" height="38"/><text x="300" y="186" text-anchor="middle">Operating system</text>
+      <rect class="box" x="220" y="204" width="160" height="38"/><text x="300" y="228" text-anchor="middle">Virtualization</text>
+      <rect class="box" x="220" y="246" width="160" height="38"/><text x="300" y="270" text-anchor="middle">Servers · storage · network</text>
+
+      <rect class="b-green" x="400" y="36" width="160" height="38"/><text x="480" y="60" text-anchor="middle">Application</text>
+      <rect class="b-green" x="400" y="78" width="160" height="38"/><text x="480" y="102" text-anchor="middle">Data</text>
+      <rect class="box" x="400" y="120" width="160" height="38"/><text x="480" y="144" text-anchor="middle">Runtime</text>
+      <rect class="box" x="400" y="162" width="160" height="38"/><text x="480" y="186" text-anchor="middle">Operating system</text>
+      <rect class="box" x="400" y="204" width="160" height="38"/><text x="480" y="228" text-anchor="middle">Virtualization</text>
+      <rect class="box" x="400" y="246" width="160" height="38"/><text x="480" y="270" text-anchor="middle">Servers · storage · network</text>
+
+      <rect class="box" x="580" y="36" width="160" height="38"/><text x="660" y="60" text-anchor="middle">Application</text>
+      <rect class="b-green" x="580" y="78" width="160" height="38"/><text x="660" y="102" text-anchor="middle">Your data &amp; users</text>
+      <rect class="box" x="580" y="120" width="160" height="38"/><text x="660" y="144" text-anchor="middle">Runtime</text>
+      <rect class="box" x="580" y="162" width="160" height="38"/><text x="660" y="186" text-anchor="middle">Operating system</text>
+      <rect class="box" x="580" y="204" width="160" height="38"/><text x="660" y="228" text-anchor="middle">Virtualization</text>
+      <rect class="box" x="580" y="246" width="160" height="38"/><text x="660" y="270" text-anchor="middle">Servers · storage · network</text>
+      </g>
+      <rect class="b-green" x="220" y="300" width="18" height="14"/><text x="246" y="312" class="sm">You manage</text>
+      <rect class="box" x="360" y="300" width="18" height="14"/><text x="386" y="312" class="sm">Provider manages</text>
+    </svg>
+    <figcaption>The further right, the less you manage, and the less you control.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <tr><th>Model</th><th>You get</th><th>AWS examples</th><th>Everyday example</th></tr>
+    <tr><td><b>IaaS</b></td><td>Raw servers, disks, networks; you manage the OS and up</td><td>EC2, EBS, VPC</td><td>Renting an empty flat</td></tr>
+    <tr><td><b>PaaS</b></td><td>A platform: you bring code, it runs it</td><td>Elastic Beanstalk, Lambda, RDS (managed DB)</td><td>Serviced apartment</td></tr>
+    <tr><td><b>SaaS</b></td><td>Finished software you just use</td><td>Amazon Connect (contact centre)</td><td>Hotel room (Gmail, Slack, Zoom)</td></tr>
+  </table></div>
+  <p class="muted">Lambda is often called <b>FaaS</b> (functions as a service) or "serverless": a PaaS where you don't even see a server.</p>
+
+  <h3>Deployment models</h3>
+  <div class="tbl"><table>
+    <tr><th>Model</th><th>What it is</th><th>Typical reason</th></tr>
+    <tr><td><b>Public cloud</b></td><td>Shared provider infrastructure (AWS, Azure, Google Cloud)</td><td>Speed, scale, no hardware</td></tr>
+    <tr><td><b>Private cloud</b></td><td>Cloud-style tooling on your own hardware (e.g. OpenStack, VMware)</td><td>Strict control or regulation</td></tr>
+    <tr><td><b>Hybrid cloud</b></td><td>On-premises + public cloud, connected</td><td>Migration in progress; data that must stay on-site</td></tr>
+    <tr><td><b>Multi-cloud</b></td><td>More than one public provider</td><td>Avoid lock-in, best-of-each services</td></tr>
+  </table></div>
+</section>
+
+<!-- 3 -->
+<section id="aws">
+  <span class="kicker">03</span>
+  <h2>What is AWS?</h2>
+  <p><b>Amazon Web Services (AWS)</b> is Amazon's public cloud and the largest cloud provider. It started selling cloud services to the public in 2006 (S3 storage and EC2 servers) and now offers more than 200 services. You'll use maybe 20 of them regularly as a DevOps engineer.</p>
+
+  <h3>Global infrastructure: Regions, AZs and edge locations</h3>
+  <figure>
+    <svg viewBox="0 0 760 250" role="img" aria-label="A region contains availability zones which contain data centres">
+      <rect class="b-acc" x="20" y="20" width="560" height="210"/>
+      <text x="40" y="46" class="t-b">Region · eu-central-1 (Frankfurt)</text>
+      <text x="40" y="64" class="sm">independent geographic area · you choose it</text>
+      <rect class="b-green" x="40" y="80" width="165" height="130"/><text x="122" y="104" text-anchor="middle" class="t-b">AZ eu-central-1a</text>
+      <rect class="box" x="58" y="118" width="60" height="34"/><text x="88" y="140" text-anchor="middle" class="sm">DC</text>
+      <rect class="box" x="128" y="118" width="60" height="34"/><text x="158" y="140" text-anchor="middle" class="sm">DC</text>
+      <text x="122" y="190" text-anchor="middle" class="sm">own power &amp; network</text>
+      <rect class="b-green" x="217" y="80" width="165" height="130"/><text x="299" y="104" text-anchor="middle" class="t-b">AZ eu-central-1b</text>
+      <rect class="box" x="235" y="118" width="60" height="34"/><text x="265" y="140" text-anchor="middle" class="sm">DC</text>
+      <rect class="box" x="305" y="118" width="60" height="34"/><text x="335" y="140" text-anchor="middle" class="sm">DC</text>
+      <rect class="b-green" x="394" y="80" width="165" height="130"/><text x="476" y="104" text-anchor="middle" class="t-b">AZ eu-central-1c</text>
+      <rect class="box" x="412" y="118" width="60" height="34"/><text x="442" y="140" text-anchor="middle" class="sm">DC</text>
+      <rect class="box" x="482" y="118" width="60" height="34"/><text x="512" y="140" text-anchor="middle" class="sm">DC</text>
+      <text x="299" y="226" text-anchor="middle" class="sm">AZs are kilometres apart, linked by fast private fibre</text>
+      <rect class="b-pur" x="610" y="60" width="130" height="130"/><text x="675" y="92" text-anchor="middle" class="t-b">Edge</text><text x="675" y="110" text-anchor="middle" class="t-b">locations</text><text x="675" y="138" text-anchor="middle" class="sm">hundreds, in cities</text><text x="675" y="156" text-anchor="middle" class="sm">CloudFront CDN,</text><text x="675" y="172" text-anchor="middle" class="sm">Route 53 DNS</text>
+    </svg>
+    <figcaption>Region → Availability Zones → data centres, plus edge locations close to users.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <tr><th>Piece</th><th>What it is</th><th>Why it matters</th></tr>
+    <tr><td><b>Region</b></td><td>A geographic area with its own independent set of data centres, e.g. <code>eu-central-1</code> (Frankfurt), <code>us-east-1</code> (N. Virginia)</td><td>Latency to users, <b>data residency laws</b> (e.g. GDPR), prices and service availability differ per region</td></tr>
+    <tr><td><b>Availability Zone (AZ)</b></td><td>One or more data centres with separate power, cooling and network; a region has at least three, e.g. <code>eu-central-1a</code></td><td>Spread servers across AZs so one building's failure doesn't take you down (<b>high availability</b>)</td></tr>
+    <tr><td><b>Edge location</b></td><td>Small sites in many cities</td><td>Cache content close to users (CloudFront) and answer DNS fast (Route 53)</td></tr>
+  </table></div>
+  <p>As of November 2026, AWS lists <b>39 Regions with 123 Availability Zones</b>, and more are announced. Numbers change often; check the <a href="https://aws.amazon.com/about-aws/global-infrastructure/regions_az/">live map</a>.</p>
+  <div class="call tip"><b>How to choose a region</b><p>1. <b>Law/compliance</b>: where must the data live? 2. <b>Latency</b>: close to your users. 3. <b>Services</b>: not every service is in every region. 4. <b>Price</b>: varies by region. For learning, pick the nearest one and stay there. These notes use Frankfurt.</p><p>A few services are <b>global</b>, not regional: IAM, Route 53 and CloudFront, for example.</p></div>
+
+  <h3>Four ways to use AWS</h3>
+  <div class="tbl"><table>
+    <tr><th>Way</th><th>Good for</th><th>Chapter</th></tr>
+    <tr><td><b>Console</b> (website)</td><td>Learning, exploring, one-off checks</td><td>Everywhere</td></tr>
+    <tr><td><b>CLI</b> (<code>aws …</code> commands)</td><td>Scripts, automation, speed</td><td>02 · AWS CLI</td></tr>
+    <tr><td><b>SDKs</b> (Python boto3, JavaScript, Go…)</td><td>Apps that call AWS from code</td><td>Roles in 01 · IAM</td></tr>
+    <tr><td><b>Infrastructure as Code</b> (CloudFormation, Terraform)</td><td>Repeatable, reviewed infrastructure: how companies work</td><td>CloudFormation, Terraform</td></tr>
+  </table></div>
+
+  <h3>The shared responsibility model</h3>
+  <div class="tbl"><table>
+    <tr><th>AWS is responsible for security <i>of</i> the cloud</th><th>You are responsible for security <i>in</i> the cloud</th></tr>
+    <tr><td>Physical data centres, guards, hardware</td><td>Who can access what (<b>IAM</b>)</td></tr>
+    <tr><td>The hypervisor and the global network</td><td>Your OS patches (on EC2), firewall rules (security groups)</td></tr>
+    <tr><td>Managed-service internals (e.g. the RDS database engine host)</td><td>Your data: encryption, backups, public/private settings</td></tr>
+  </table></div>
+  <p class="muted">The more managed the service (PaaS/SaaS), the more AWS takes on. Most AWS security incidents are on the customer side: open buckets, leaked keys, too-broad permissions. That's why the next chapter is IAM.</p>
+
+  <h3>How you pay</h3>
+  <div class="tbl"><table>
+    <tr><th>Option</th><th>Idea</th><th>Use when</th></tr>
+    <tr><td><b>On-Demand</b></td><td>Pay per second/hour, no commitment</td><td>Learning, unpredictable workloads</td></tr>
+    <tr><td><b>Savings Plans / Reserved</b></td><td>Commit for 1–3 years for a big discount</td><td>Steady production workloads</td></tr>
+    <tr><td><b>Spot</b></td><td>Spare capacity at a large discount; AWS can reclaim it with 2 minutes' notice</td><td>Batch jobs, CI runners, anything that can restart</td></tr>
+    <tr><td><b>Free Tier</b></td><td>Credits and always-free usage for new accounts</td><td>This guide</td></tr>
+  </table></div>
+</section>
+
+<!-- 4 -->
+<section id="account">
+  <span class="kicker">04 · Lab</span>
+  <h2>Lab: Open an AWS account safely</h2>
+  <h3>Free plan or Paid plan?</h3>
+  <p>New accounts choose a plan at sign-up. Both get <b>$100 in credits</b>, and you can earn up to $100 more by completing activities in the first 6 months.</p>
+  <div class="tbl"><table>
+    <tr><th></th><th>Free plan</th><th>Paid plan</th></tr>
+    <tr><td>Can you be charged?</td><td><b>No</b>, never</td><td>Yes, pay-as-you-go after credits</td></tr>
+    <tr><td>Ends</td><td>After <b>6 months or when credits run out</b>; the account closes (data kept 90 days, so you can upgrade)</td><td>Doesn't close</td></tr>
+    <tr><td>Services</td><td>Most; some enterprise services require upgrading</td><td>All</td></tr>
+    <tr><td>Best for</td><td><b>Learning (this guide)</b></td><td>Real projects</td></tr>
+  </table></div>
+  <div class="call warn"><b>Things that silently upgrade a Free plan to Paid</b><p>For example joining or creating <b>AWS Organizations</b> or setting up Control Tower. You can't go back to Free afterwards, and on the Paid plan resources you forget will cost real money.</p></div>
+
+  <div class="lab"><span class="tag">LAB 0 · BROWSER</span>
+    <ol class="steps">
+      <li>Go to <a href="https://aws.amazon.com/free/">aws.amazon.com/free</a> → <b>Create an AWS account</b>.</li>
+      <li>Enter an email you'll keep long-term (this becomes the <b>root user</b>) and an account name.</li>
+      <li>Verify the email, set a long unique password, and choose <b>Free plan</b>.</li>
+      <li>Enter contact details and a payment card. On the Free plan the card is for identity verification, not billing.</li>
+      <li>Verify your phone number, then choose the <b>Basic (free) support</b> plan.</li>
+      <li>Sign in as root and <b>immediately</b> do <a href="iam.html#secure">IAM Lab 1</a>: MFA on root, your own admin user, billing access.</li>
+      <li>Pick your region in the top-right selector (e.g. <b>Europe (Frankfurt)</b>) and keep it for everything.</li>
+      <li>Check <b>Billing and Cost Management → Credits</b> to see your credit balance and end date.</li>
+    </ol>
+    <h4>Optional: look at regions and AZs from the command line</h4>
+    <p>After IAM Lab 1, open <b>CloudShell</b> (the <code>&gt;_</code> icon at the top of the console) as your admin user:</p>
+<div class="code"><span class="lang">bash</span><pre><span class="c-c"># every region your account can use</span>
+aws ec2 describe-regions --query "Regions[].RegionName" --output text
+
+<span class="c-c"># the AZs in your current region</span>
+aws ec2 describe-availability-zones --query "AvailabilityZones[].ZoneName" --output text</pre></div>
+  </div>
+  <div class="call tip"><b>Safe-account checklist</b><p>MFA on root · root used only for emergencies · your own admin user with MFA · one region · on a Paid plan, a budget alert (Billing → Budgets → <i>Zero spend budget</i>). The IAM chapter walks through every one of these.</p></div>
+</section>
+
+<!-- 5 -->
+<section id="interview">
+  <span class="kicker">05</span>
+  <h2>Interview Q&amp;A</h2>
+  <details><summary>What is virtualization, and what's a hypervisor?</summary><p>Running many isolated virtual machines on one physical machine. The hypervisor is the software layer that divides the hardware between VMs. Type 1 runs on bare metal (ESXi, KVM, Nitro); Type 2 runs on top of an OS (VirtualBox).</p></details>
+  <details><summary>VM vs container?</summary><p>A VM virtualizes hardware and runs a full OS with its own kernel; a container virtualizes the OS and shares the host kernel, so it's smaller and starts faster but is less isolated. Containers usually run inside VMs.</p></details>
+  <details><summary>What is cloud computing?</summary><p>On-demand delivery of IT resources over the internet with pay-as-you-go pricing. NIST's five characteristics: on-demand self-service, broad network access, resource pooling, rapid elasticity, measured service.</p></details>
+  <details><summary>IaaS vs PaaS vs SaaS, with AWS examples?</summary><p>IaaS gives raw infrastructure and you manage the OS and up (EC2). PaaS runs your code on a managed platform (Elastic Beanstalk, Lambda, RDS). SaaS is finished software (Amazon Connect, or Gmail outside AWS).</p></details>
+  <details><summary>CapEx vs OpEx?</summary><p>CapEx is buying assets upfront (servers); OpEx is ongoing operating spend (cloud bills). The cloud turns infrastructure from CapEx into OpEx and removes capacity guessing.</p></details>
+  <details><summary>Region vs Availability Zone vs edge location?</summary><p>A region is an independent geographic area; an AZ is one or more isolated data centres inside a region (at least three per region); edge locations are small city sites used by CloudFront and Route 53 to serve users with low latency.</p></details>
+  <details><summary>How do you make an app highly available on AWS?</summary><p>Run it in at least two (ideally three) AZs behind a load balancer, with data replicated across AZs. For disaster recovery, add a second region.</p></details>
+  <details><summary>How do you choose a region?</summary><p>Compliance and data residency first, then latency to users, service availability, and price.</p></details>
+  <details><summary>Explain the shared responsibility model.</summary><p>AWS secures the cloud itself (facilities, hardware, hypervisor, network); the customer secures what they put in it (IAM, data, encryption, OS patching on EC2, network rules). The split shifts toward AWS for more managed services.</p></details>
+  <details><summary>On-Demand vs Reserved/Savings Plans vs Spot?</summary><p>On-Demand: no commitment, highest price. Savings Plans/Reserved: 1–3 year commitment, large discount for steady loads. Spot: deepest discount, can be interrupted with 2 minutes' notice, for fault-tolerant work.</p></details>
+</section>
+
+<!-- 6 -->
+<section id="refs">
+  <span class="kicker">06</span>
+  <h2>References &amp; videos</h2>
+  <h3>Official</h3>
+  <ul>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/145/final">NIST SP 800-145: The NIST Definition of Cloud Computing</a></li>
+    <li><a href="https://aws.amazon.com/what-is-cloud-computing/">AWS: What is cloud computing?</a></li>
+    <li><a href="https://aws.amazon.com/about-aws/global-infrastructure/regions_az/">AWS Regions and Availability Zones</a></li>
+    <li><a href="https://aws.amazon.com/ec2/nitro/">AWS Nitro System</a></li>
+    <li><a href="https://aws.amazon.com/compliance/shared-responsibility-model/">Shared responsibility model</a></li>
+    <li><a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html">AWS Free Tier plans</a></li>
+  </ul>
+  <h3>Videos for this chapter</h3>
+  <ul>
+    <li>M Prashant, AWS in One Video: <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=423s">Virtualization (07:03)</a> · <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=945s">Cloud computing (15:45)</a> · <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=1701s">What is AWS (28:21)</a> · <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=2368s">Account setup (39:28)</a></li>
+    <li>M Prashant playlist: <a href="https://www.youtube.com/watch?v=BNTFJJMh2eU">Virtualization</a> · <a href="https://www.youtube.com/watch?v=Y_IdICX2PHU">Cloud computing, IaaS/PaaS/SaaS</a> · <a href="https://www.youtube.com/watch?v=VLjlle_8bwE">AWS overview</a> · <a href="https://www.youtube.com/watch?v=otvUmZcAd34">Free tier account setup</a></li>
+    <li>Boot.dev: <a href="https://www.youtube.com/watch?v=UcxXSHDDUE8&amp;t=390s">Chapter 1, Cloud computing (06:30)</a></li>
+    <li>Abhishek Veeramalla: <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Day 1, Introduction to AWS</a></li>
+  </ul>
+</section>
+
+<nav class="pager" aria-label="Chapter navigation">
+  <a href="index.html"><span>← Back</span>All chapters</a>
+  <a href="iam.html" class="next"><span>Next →</span>01 · IAM</a>
+</nav>
+<footer>
+  <p><b>AWS Notes · Chapter 00 · Cloud &amp; AWS Basics</b> · Written by <a href="https://github.com/usmanrangrez">@usmanrangrez</a>, 15 Nov 2026.</p>
+  <p>Written with help from Claude (an AI assistant). Not affiliated with or endorsed by Amazon Web Services. Found a mistake? <a href="https://github.com/usmanrangrez/aws-notes/issues">Open an issue</a>.</p>
+</footer>
+
+</main>
+<script>
+// theme toggle (remembered per browser)
+(function(){
+  var root=document.documentElement, key='awsnotes-theme';
+  try{var saved=localStorage.getItem(key); if(saved) root.setAttribute('data-theme',saved);
+      else if(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme','dark');}catch(e){}
+  document.getElementById('theme').addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next); try{localStorage.setItem(key,next)}catch(e){}
+  });
+})();
+// copy buttons
+document.querySelectorAll('.code').forEach(function(box){
+  var b=document.createElement('button'); b.className='copy'; b.textContent='Copy';
+  b.addEventListener('click',function(){
+    var t=box.querySelector('pre').innerText;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied ✓'},function(){
+      var r=document.createRange(); r.selectNodeContents(box.querySelector('pre')); var s=getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent='Selected';
+    });
+    setTimeout(function(){b.textContent='Copy'},1500);
+  });
+  box.appendChild(b);
+});
+// active section in sidebar
+var links=[].slice.call(document.querySelectorAll('#toc a'));
+var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('main section[id]').forEach(function(s){obs.observe(s)});
+links.forEach(function(l){l.addEventListener('click',function(){document.body.classList.remove('nav-open')})});
+</script>
+</body>
+</html>

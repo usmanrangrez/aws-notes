@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Notes: Learning AWS for DevOps by Building Things</title>
-<meta name="description" content="Hands-on AWS notes for beginners heading into DevOps: real labs, real outputs, real mistakes. Starting with IAM.">
+<meta name="description" content="Hands-on AWS notes for beginners heading into DevOps, chapter by chapter in the order of M Prashant's AWS in One Video course, with labs, real outputs and real mistakes.">
 <link rel="canonical" href="https://usmanrangrez.github.io/aws-notes/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="AWS Notes: learning AWS by building things">
-<meta property="og:description" content="Hands-on AWS chapters for beginners heading into DevOps. Chapter 1: IAM, 6 labs.">
+<meta property="og:description" content="Hands-on AWS chapters for beginners heading into DevOps: labs, real outputs, real mistakes.">
 <meta property="og:url" content="https://usmanrangrez.github.io/aws-notes/">
 <meta property="og:image" content="https://usmanrangrez.github.io/aws-notes/og-iam.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -175,6 +175,12 @@ ul.check{padding-left:0;margin:12px 0}
 .check li::before{content:"";position:absolute;left:2px;top:13px;width:14px;height:14px;border:1.5px solid var(--accent);border-radius:2px}
 .check li::after{content:"";position:absolute;left:7px;top:15px;width:4px;height:8px;border:solid var(--accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
 
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:2px;margin:48px 0 0}
+.pager a{display:block;padding:16px 18px;text-decoration:none;color:var(--ink);font:600 15px/1.4 var(--mono);transition:background-color .2s}
+.pager a:hover{background:var(--surface)}
+.pager a+a{border-left:1px solid var(--line)}
+.pager .next{text-align:right}
+.pager span{display:block;font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
 ul{padding-left:1.2em}
 li{margin:.25em 0}
 footer{color:var(--muted);font:400 13px/1.6 var(--sans);border-top:1px solid var(--line);padding-top:24px;margin-top:40px}
@@ -183,23 +189,29 @@ footer p{margin:.4em 0}
 .byline a{color:var(--ink)}
 @media print{.side,.menu-btn,.copy{display:none}main{margin:0;padding:0}section{break-inside:auto}.code{break-inside:avoid}}
 
-.home{margin-left:0;max-width:880px;margin:0 auto;padding:64px clamp(20px,5vw,48px) 100px}
+.home{max-width:920px;margin:0 auto;padding:64px clamp(20px,5vw,48px) 100px}
 .home>*{max-width:none}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:56px}
 .top .brand{font:700 15px/1 var(--mono);display:flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none}
 .top .logo{background:var(--ink);color:var(--bg);font:700 11px/1 var(--mono);padding:5px 6px;border-radius:2px}
-.chapters{list-style:none;padding:0;margin:28px 0;border-top:1px solid var(--line)}
+.chapters{list-style:none;padding:0;margin:20px 0 8px;border-top:1px solid var(--line)}
 .chapters li{margin:0;border-bottom:1px solid var(--line)}
-.chapters a,.chapters .soon{display:grid;grid-template-columns:56px 1fr auto;gap:16px;align-items:baseline;padding:20px 4px;text-decoration:none;color:var(--ink);transition:background-color .2s}
-.chapters a:hover{background:var(--surface)}
-.chapters .n{font:600 13px/1 var(--mono);color:var(--accent)}
-.chapters .soon .n{color:var(--muted)}
-.chapters h3{margin:0 0 4px;font:600 1.12rem/1.3 var(--mono)}
-.chapters p{margin:0;color:var(--muted);font-size:15px}
-.chapters .tag{font:600 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:5px 7px;border:1px solid var(--line-strong);border-radius:2px;color:var(--muted);white-space:nowrap}
-.chapters a .tag{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft)}
-.chapters .soon{opacity:.75}
-@media (max-width:600px){.chapters a,.chapters .soon{grid-template-columns:40px 1fr}.chapters .tag{grid-column:2;justify-self:start}}
+.row{position:relative;display:grid;grid-template-columns:52px 1fr auto;gap:16px;align-items:baseline;padding:18px 4px;transition:background-color .2s}
+.row .cover{position:absolute;inset:0;z-index:0}
+.row.live:hover{background:var(--surface)}
+.row .vid a{position:relative;z-index:1}
+.row .n{font:600 13px/1 var(--mono);color:var(--muted)}
+.row.live .n{color:var(--accent)}
+.row h3{margin:0 0 4px;font:600 1.05rem/1.3 var(--mono)}
+.row p{margin:0;color:var(--muted);font-size:14.5px}
+.row .vid{margin-top:6px;font:500 12px/1.5 var(--mono)}
+.row .vid a{color:var(--muted)}
+.row .vid a:hover{color:var(--accent)}
+.row .tag{font:600 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:5px 7px;border:1px solid var(--line-strong);border-radius:2px;color:var(--muted);white-space:nowrap}
+.row.live .tag{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft)}
+.row:not(.live) h3{color:var(--ink-2)}
+.legend{font:400 13px/1.5 var(--mono);color:var(--muted)}
+@media (max-width:600px){.row{grid-template-columns:36px 1fr}.row .tag{grid-column:2;justify-self:start}}
 </style>
 </head>
 <body>
@@ -213,19 +225,59 @@ footer p{margin:.4em 0}
   <p class="lead">I'm learning AWS for DevOps, and every chapter here comes from doing the work in a real account: real labs, real outputs and the real mistakes, written up so the next beginner can skip a few of them.</p>
   <p class="byline">By <a href="https://github.com/usmanrangrez">@usmanrangrez</a> · Started Nov 2026</p>
 
-  <h2 style="margin-top:56px">Chapters</h2>
-  <ul class="chapters">
-    <li><a href="iam.html"><span class="n">01</span><div><h3>IAM: Identity &amp; Access Management</h3><p>6 hands-on labs: users and policies, explicit vs implicit deny, roles for EC2 and people, GitHub Actions OIDC with no keys, a real key leak, and CloudTrail.</p></div><span class="tag">Read</span></a></li>
-    <li><div class="soon"><span class="n">02</span><div><h3>EC2</h3><p>Instances, AMIs, EBS, security groups, load balancing and auto scaling.</p></div><span class="tag">Planned</span></div></li>
-<li><div class="soon"><span class="n">03</span><div><h3>VPC &amp; networking</h3><p>Subnets, route tables, NAT, security groups vs NACLs, Route 53.</p></div><span class="tag">Planned</span></div></li>
-<li><div class="soon"><span class="n">04</span><div><h3>S3</h3><p>Buckets, policies, versioning, lifecycle and static sites.</p></div><span class="tag">Planned</span></div></li>
-<li><div class="soon"><span class="n">05</span><div><h3>Databases</h3><p>RDS and DynamoDB from a DevOps point of view.</p></div><span class="tag">Planned</span></div></li>
-<li><div class="soon"><span class="n">06</span><div><h3>Serverless</h3><p>Lambda, event-driven designs and cost.</p></div><span class="tag">Planned</span></div></li>
-<li><div class="soon"><span class="n">07</span><div><h3>Containers</h3><p>ECR, ECS and EKS, including IAM for pods.</p></div><span class="tag">Planned</span></div></li>
-<li><div class="soon"><span class="n">08</span><div><h3>IaC &amp; CI/CD</h3><p>Terraform and pipelines that deploy to AWS.</p></div><span class="tag">Planned</span></div></li>
-  </ul>
+  <section style="padding-top:40px;margin-top:40px">
+    <h2>Chapters</h2>
+    <p>The chapters follow the order of M Prashant's <a href="https://www.youtube.com/watch?v=N4sJj-SxX00">AWS in ONE VIDEO for Beginners</a> (Hindi). Each row links to the matching timestamp, so you can watch the video and then do the labs here. The notes are my own write-up, not a transcript.</p>
+    <ul class="chapters">
+<li id="ch-00"><div class="row live"><a class="cover" href="cloud-basics.html" aria-label="Read chapter 00"></a><span class="n">00</span><div><h3>Cloud &amp; AWS basics</h3><p>Virtualization, cloud computing, IaaS/PaaS/SaaS, regions and AZs, opening an account safely.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=423s">M Prashant 7:03</a></p></div><span class="tag">Read</span></div></li>
+<li id="ch-01"><div class="row live"><a class="cover" href="iam.html" aria-label="Read chapter 01"></a><span class="n">01</span><div><h3>IAM</h3><p>6 hands-on labs: policies, explicit vs implicit deny, roles for EC2 and people, GitHub OIDC with no keys, a real key leak, CloudTrail.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=2621s">M Prashant 43:41</a></p></div><span class="tag">Read</span></div></li>
+<li id="ch-02"><div class="row"><span class="n">02</span><div><h3>AWS CLI configuration</h3><p>Installing and configuring the CLI, profiles, and SSO login instead of long-lived keys.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=4140s">M Prashant 1:09:00</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-03"><div class="row"><span class="n">03</span><div><h3>EC2</h3><p>Instances, instance types, key pairs, security groups, user data.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=4835s">M Prashant 1:20:35</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-04"><div class="row"><span class="n">04</span><div><h3>EBS</h3><p>Volumes, resizing, snapshots and backups.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=7212s">M Prashant 2:00:12</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-05"><div class="row"><span class="n">05</span><div><h3>AMI</h3><p>Custom images and launch templates.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=9596s">M Prashant 2:39:56</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-06"><div class="row"><span class="n">06</span><div><h3>ELB &amp; Auto Scaling</h3><p>Load balancers, target groups, auto scaling groups.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=10604s">M Prashant 2:56:44</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-07"><div class="row"><span class="n">07</span><div><h3>S3</h3><p>Buckets, policies, versioning, lifecycle, static websites.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=13094s">M Prashant 3:38:14</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-08"><div class="row"><span class="n">08</span><div><h3>RDS</h3><p>Managed relational databases, backups, Multi-AZ.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=15905s">M Prashant 4:25:05</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-09"><div class="row"><span class="n">09</span><div><h3>DynamoDB</h3><p>NoSQL tables, keys and capacity.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=17753s">M Prashant 4:55:53</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-10"><div class="row"><span class="n">10</span><div><h3>Lambda</h3><p>Serverless functions and triggers.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=19441s">M Prashant 5:24:01</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-11"><div class="row"><span class="n">11</span><div><h3>CloudFormation</h3><p>Infrastructure as Code with AWS's native tool.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=20784s">M Prashant 5:46:24</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-12"><div class="row"><span class="n">12</span><div><h3>Route 53</h3><p>DNS, hosted zones, records and routing.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=22086s">M Prashant 6:08:06</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-13"><div class="row"><span class="n">13</span><div><h3>CloudFront</h3><p>CDN, caching and edge locations.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=23803s">M Prashant 6:36:43</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-14"><div class="row"><span class="n">14</span><div><h3>VPC</h3><p>Subnets, route tables, internet and NAT gateways, and building a VPC by hand.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=24837s">M Prashant 6:53:57</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-15"><div class="row"><span class="n">15</span><div><h3>Billing &amp; Organizations</h3><p>Budgets, cost tools, multi-account setup.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=27564s">M Prashant 7:39:24</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-16"><div class="row"><span class="n">16</span><div><h3>Amplify</h3><p>Full-stack web app hosting.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=28038s">M Prashant 7:47:18</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-17"><div class="row"><span class="n">17</span><div><h3>ECS</h3><p>Running containers with ECS and Fargate.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=30657s">M Prashant 8:30:57</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-18"><div class="row"><span class="n">18</span><div><h3>EKS</h3><p>Managed Kubernetes on AWS.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=31707s">M Prashant 8:48:27</a></p></div><span class="tag">Planned</span></div></li>
+    </ul>
+    <h3 style="margin-top:36px">Bonus</h3>
+    <ul class="chapters">
+<li id="ch-B1"><div class="row"><span class="n">B1</span><div><h3>Terraform basics</h3><p>Infrastructure as Code with Terraform.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=33366s">M Prashant 9:16:06</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-B2"><div class="row"><span class="n">B2</span><div><h3>DNS in practice</h3><p>How DNS resolution really works, hands-on.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=33832s">M Prashant 9:23:52</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-B3"><div class="row"><span class="n">B3</span><div><h3>SSL/TLS &amp; encryption</h3><p>Certificates, HTTPS and how encryption keeps data safe.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=N4sJj-SxX00&amp;t=35979s">M Prashant 9:59:39</a></p></div><span class="tag">Planned</span></div></li>
+    </ul>
+  </section>
 
-  <section style="border-top:none;padding-top:24px">
+  <section>
+    <h2>Additional topics</h2>
+    <p>What the main video doesn't cover, collected from M Prashant's <a href="https://www.youtube.com/playlist?list=PL0tP8lerTbX3mKdZYfJwXcKf6SOfmQcgl">AWS for Beginners playlist</a>, Abhishek Veeramalla's <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">AWS Zero to Hero</a> and Boot.dev's <a href="https://www.youtube.com/watch?v=UcxXSHDDUE8">Full AWS DevOps Course</a>. Everything else in those courses maps onto the chapters above.</p>
+    <ul class="chapters">
+<li id="ch-A1"><div class="row"><span class="n">A1</span><div><h3>CloudWatch monitoring &amp; alerts</h3><p>Metrics, logs, alarms and SNS notifications. Not covered in the main video.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=UcxXSHDDUE8&amp;t=11065s">Boot.dev Ch.6 (3:04:25)</a> · <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 16</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A2"><div class="row"><span class="n">A2</span><div><h3>Security groups vs NACLs, in depth</h3><p>Stateful vs stateless firewalls, with practicals.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 5</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A3"><div class="row"><span class="n">A3</span><div><h3>Docker fundamentals</h3><p>Images, containers and how Docker works. Read before ECS/EKS.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=xvm9E6C8I4A">M Prashant playlist</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A4"><div class="row"><span class="n">A4</span><div><h3>Web servers on EC2: NGINX &amp; Apache</h3><p>Reverse proxy, load balancing, virtual hosts, HTTPS with your own domain.</p><p class="vid">▶ <a href="https://www.youtube.com/watch?v=NTOcdjMs8E4">NGINX</a> · <a href="https://www.youtube.com/watch?v=NACRKwkXKO0">Apache</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A5"><div class="row"><span class="n">A5</span><div><h3>CI/CD on AWS</h3><p>CodeCommit, CodeBuild and CodePipeline, Jenkins vs CodePipeline, end-to-end pipelines.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Days 12–15</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A6"><div class="row"><span class="n">A6</span><div><h3>ECR: container registry</h3><p>Storing images; ECR vs Docker Hub.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 20</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A7"><div class="row"><span class="n">A7</span><div><h3>Secrets management</h3><p>Secrets Manager and Parameter Store, a common interview topic.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 23</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A8"><div class="row"><span class="n">A8</span><div><h3>AWS Config &amp; compliance</h3><p>Find compliant and non-compliant resources.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 25</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A9"><div class="row"><span class="n">A9</span><div><h3>Load balancer types</h3><p>ALB vs NLB vs GWLB in detail (extends chapter 06).</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 26</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A10"><div class="row"><span class="n">A10</span><div><h3>Cost optimization</h3><p>Event-driven cost cleanup and billing best practices.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Day 18 + billing video</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A11"><div class="row"><span class="n">A11</span><div><h3>Real-world projects</h3><p>Jenkins on EC2, a production-style setup, S3 demo projects, three-tier apps (EC2 and EKS), EKS + VPC with Terraform, shell scripting, migrating apps to AWS.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Days 3, 7, 9, 24, 28, 30 + extras</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A12"><div class="row"><span class="n">A12</span><div><h3>Newer services</h3><p>Amazon CodeCatalyst, Amazon Q Developer CLI, ElastiCache (Redis vs Valkey), EKS Auto Mode.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek playlist (end)</a></p></div><span class="tag">Planned</span></div></li>
+<li id="ch-A13"><div class="row"><span class="n">A13</span><div><h3>Interview prep</h3><p>Scenario questions on EC2, IAM and VPC; 500 Q&amp;A; job tips.</p><p class="vid">▶ <a href="https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze">Abhishek Days 8, 27, 29</a></p></div><span class="tag">Planned</span></div></li>
+    </ul>
+  </section>
+
+  <section>
     <h2>How these notes work</h2>
     <ul>
       <li><b>Hands-on first.</b> Every chapter is built around labs you can run in your own account, with cleanup steps.</li>
@@ -236,7 +288,7 @@ footer p{margin:.4em 0}
   </section>
 
   <footer>
-    <p>Written by <a href="https://github.com/usmanrangrez">@usmanrangrez</a> with help from Claude (an AI assistant). Every lab was run and checked by hand. Not affiliated with Amazon Web Services. Spotted a mistake? <a href="https://github.com/usmanrangrez/aws-notes/issues">Open an issue</a>.</p>
+    <p>Written by <a href="https://github.com/usmanrangrez">@usmanrangrez</a> with help from Claude (an AI assistant). Every lab is run and checked by hand. Not affiliated with Amazon Web Services or the course creators linked above. Spotted a mistake? <a href="https://github.com/usmanrangrez/aws-notes/issues">Open an issue</a>.</p>
   </footer>
 </main>
 <script>
