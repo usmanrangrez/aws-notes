@@ -5,159 +5,193 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Notes · IAM</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 :root{
-  --bg:#f7f8fb; --panel:#ffffff; --ink:#1b2333; --muted:#5b6578; --line:#e3e7ef;
-  --accent:#e8830c; --accent-soft:#fff3e3; --blue:#2563eb; --blue-soft:#e8f0ff;
-  --green:#15803d; --green-soft:#e7f7ec; --red:#c2410c; --red-soft:#fdeee6;
-  --purple:#7c3aed; --purple-soft:#f1ebff; --code-bg:#0f172a; --code-ink:#e2e8f0;
-  --side:#111827; --side-ink:#cbd5e1; --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.06);
+  --bg:#ffffff; --surface:#f8fafc; --panel:#ffffff; --ink:#0f172a; --ink-2:#1e293b; --muted:#475569; --line:#e2e8f0; --line-strong:#cbd5e1;
+  --accent:#15803d; --accent-soft:#f0fdf4; --red:#b91c1c; --red-soft:#fef2f2;
+  --code-bg:#0f172a; --code-ink:#e2e8f0; --code-line:#1e293b; --ring:#15803d;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --side-w:288px; --measure:840px;
 }
 html[data-theme="dark"]{
-  --bg:#0b1020; --panel:#121a2e; --ink:#e6eaf2; --muted:#9aa5b8; --line:#243049;
-  --accent:#f59e0b; --accent-soft:#2a2112; --blue:#60a5fa; --blue-soft:#14223d;
-  --green:#4ade80; --green-soft:#10291a; --red:#fb923c; --red-soft:#2c1a10;
-  --purple:#a78bfa; --purple-soft:#1f1838; --code-bg:#070b16; --side:#070b16; --shadow:none;
+  --bg:#020617; --surface:#0e1223; --panel:#0e1223; --ink:#f8fafc; --ink-2:#e2e8f0; --muted:#94a3b8; --line:#1e293b; --line-strong:#334155;
+  --accent:#22c55e; --accent-soft:#052e16; --red:#f87171; --red-soft:#2a0b0b;
+  --code-bg:#0b1020; --code-line:#1e293b; --ring:#22c55e;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;background:var(--bg);color:var(--ink)}
-a{color:var(--blue)}
-code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-:not(pre)>code{background:var(--blue-soft);color:var(--blue);padding:.1em .38em;border-radius:5px;font-size:.88em;word-break:break-word}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;font:400 16px/1.65 var(--sans);background:var(--bg);color:var(--ink);text-rendering:optimizeLegibility}
+a{color:var(--accent);text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:2px}
+button,summary,a{cursor:pointer}
+code,pre,kbd{font-family:var(--mono)}
+:not(pre)>code{background:var(--surface);color:var(--ink-2);border:1px solid var(--line);padding:.05em .35em;border-radius:3px;font-size:.84em;overflow-wrap:anywhere}
+::selection{background:color-mix(in srgb,var(--accent) 25%,transparent)}
 
-/* layout */
-.side{position:fixed;inset:0 auto 0 0;width:280px;background:var(--side);color:var(--side-ink);overflow-y:auto;padding:22px 16px 40px;z-index:5}
-.side .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:1.05rem;margin:0 6px 4px}
-.side .brand span.logo{background:var(--accent);color:#111;border-radius:8px;padding:2px 8px;font-size:.85rem}
-.side .sub{font-size:.8rem;color:#8b96aa;margin:0 6px 18px}
-.side nav a{display:block;color:var(--side-ink);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:.92rem}
-.side nav a:hover{background:#1f2937;color:#fff}
-.side nav a.active{background:#1f2937;color:#fff;box-shadow:inset 3px 0 0 var(--accent)}
-.side nav .grp{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6b7690;margin:16px 10px 6px}
-.side .tools{margin:20px 6px 0;display:flex;gap:8px}
-.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:.85rem;cursor:pointer}
-.side .btn{background:#1f2937;color:#e5e7eb;border-color:#374151}
-main{margin-left:280px;padding:40px clamp(18px,4vw,64px) 120px;max-width:1180px}
+/* ---------- sidebar ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:var(--side-w);background:var(--bg);border-right:1px solid var(--line);overflow-y:auto;padding:28px 20px 40px;z-index:5}
+.side .brand{font:700 15px/1 var(--mono);letter-spacing:-.01em;color:var(--ink);margin:0 8px 6px;display:flex;align-items:center;gap:8px}
+.side .brand span.logo{display:inline-block;background:var(--ink);color:var(--bg);font:700 11px/1 var(--mono);padding:5px 6px;border-radius:2px;letter-spacing:.04em}
+.side .sub{font:400 12px/1.4 var(--mono);color:var(--muted);margin:0 8px 22px}
+.side nav a{display:flex;gap:10px;align-items:baseline;color:var(--muted);text-decoration:none;padding:7px 8px;font-size:14px;line-height:1.35;border-left:2px solid transparent;transition:color .2s,border-color .2s,background-color .2s}
+.side nav a:hover{color:var(--ink);background:var(--surface)}
+.side nav a.active{color:var(--ink);border-left-color:var(--accent);background:var(--surface);font-weight:500}
+.side nav .grp{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 8px 8px}
+.toc-num{font:500 12px/1 var(--mono);color:var(--muted);min-width:20px}
+.side nav a.active .toc-num{color:var(--accent)}
+.side .tools{margin:26px 8px 0;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink);border-radius:4px;padding:6px 12px;font:500 13px/1 var(--sans);transition:background-color .2s,border-color .2s}
+.btn:hover{background:var(--surface);border-color:var(--ink)}
+.btn svg{width:15px;height:15px}
+main{margin-left:var(--side-w);padding:56px clamp(20px,5vw,72px) 120px}
+main>*{max-width:var(--measure)}
 .menu-btn{display:none}
-@media (max-width:900px){
-  .side{transform:translateX(-100%);transition:transform .2s}
-  body.nav-open .side{transform:none}
-  main{margin-left:0;padding-top:64px}
-  .menu-btn{display:block;position:fixed;top:12px;left:12px;z-index:6}
+@media (max-width:960px){
+  .side{transform:translateX(-100%);transition:transform .25s ease-out;box-shadow:none}
+  body.nav-open .side{transform:none;box-shadow:0 0 0 100vmax rgba(2,6,23,.35)}
+  main{margin-left:0;padding-top:76px}
+  .menu-btn{display:inline-flex;position:fixed;top:14px;left:14px;z-index:6;min-height:44px}
 }
 
-/* typography */
-h1{font-size:clamp(2rem,4vw,2.8rem);line-height:1.15;margin:0 0 10px}
-h2{font-size:1.65rem;margin:0 0 14px;padding-top:6px}
-h3{font-size:1.18rem;margin:28px 0 10px}
-h4{margin:20px 0 8px}
-section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:30px clamp(18px,3vw,36px);margin:0 0 28px;box-shadow:var(--shadow);scroll-margin-top:20px}
-.kicker{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
-.lead{font-size:1.1rem;color:var(--muted);max-width:760px}
+/* ---------- type ---------- */
+h1,h2{font-family:var(--mono);letter-spacing:-.02em;color:var(--ink)}
+h1{font-size:clamp(1.9rem,3.6vw,2.6rem);line-height:1.15;font-weight:700;margin:0 0 16px;text-wrap:balance}
+h2{font-size:clamp(1.35rem,2.2vw,1.6rem);line-height:1.25;font-weight:700;margin:0 0 16px;text-wrap:balance}
+h3{font:600 1.12rem/1.35 var(--sans);margin:36px 0 10px;color:var(--ink)}
+h4{font:600 1rem/1.4 var(--sans);margin:22px 0 8px}
+p{margin:.6em 0}
+section{padding:48px 0 8px;border-top:1px solid var(--line);margin:0 0 8px;scroll-margin-top:16px}
+.kicker{display:block;font:600 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.kicker::before{content:"§ ";color:var(--accent)}
+.lead{font-size:1.125rem;line-height:1.6;color:var(--muted);max-width:680px;margin:0}
 .muted{color:var(--muted)}
 
-/* hero */
-.hero{background:linear-gradient(135deg,#111827 0%,#1e293b 60%,#3b2a12 100%);color:#f8fafc;border:none}
-.hero .lead{color:#cbd5e1}
-.hero .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 12px;font-size:.85rem}
-.hero .note{margin-top:18px;font-size:.88rem;color:#94a3b8}
+/* ---------- header ---------- */
+.hero{border-top:none;padding:0 0 36px}
+.hero .kicker::before{content:""}
+.hero .pills{display:flex;flex-wrap:wrap;gap:6px;margin:24px 0 0;padding:0;list-style:none}
+.pill{font:500 12px/1 var(--mono);color:var(--ink-2);border:1px solid var(--line-strong);border-radius:2px;padding:6px 8px;white-space:nowrap}
+.hero .note{margin-top:22px;font-size:14px;color:var(--muted);border-left:2px solid var(--line-strong);padding-left:12px}
+.meta{display:flex;flex-wrap:wrap;gap:0;margin:22px 0 0;border:1px solid var(--line);border-radius:2px}
+.meta div{padding:12px 16px;border-right:1px solid var(--line);flex:1 1 120px}
+.meta div:last-child{border-right:none}
+.meta b{display:block;font:700 20px/1.2 var(--mono);color:var(--ink)}
+.meta span{font-size:12px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
 
-/* tables */
-.tbl{overflow-x:auto;margin:14px 0}
-table{border-collapse:collapse;width:100%;font-size:.94rem}
-th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
-th{background:var(--bg);font-weight:650;white-space:nowrap}
+/* ---------- tables ---------- */
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:2px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
+th,td{border-bottom:1px solid var(--line);padding:10px 14px;text-align:left;vertical-align:top}
+th{background:var(--surface);font:600 11.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
 tr:last-child td{border-bottom:none}
-.ok{color:var(--green);font-weight:700}.no{color:var(--red);font-weight:700}
+td:first-child{font-weight:500}
+.st{display:inline-flex;align-items:center;gap:5px;font:600 12px/1 var(--mono);padding:4px 7px;border-radius:2px;white-space:nowrap;border:1px solid}
+.st.ok{color:var(--accent);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.st.no{color:var(--red);background:var(--red-soft);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+.ok{color:var(--accent);font-weight:600}.no{color:var(--red);font-weight:600}
 
-/* code */
-.code{position:relative;margin:14px 0}
-.code pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:12px;overflow-x:auto;font-size:.86rem;line-height:1.55;margin:0}
-.code .lang{position:absolute;top:8px;right:72px;font-size:.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
-.code .copy{position:absolute;top:6px;right:8px;font-size:.75rem;padding:3px 9px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;cursor:pointer}
-.c-k{color:#7dd3fc}.c-s{color:#fde68a}.c-c{color:#64748b;font-style:italic}.c-g{color:#86efac}.c-r{color:#fca5a5}
+/* ---------- code ---------- */
+.code{position:relative;margin:16px 0;border:1px solid var(--code-line);border-radius:4px;background:var(--code-bg)}
+.code pre{color:var(--code-ink);padding:38px 18px 16px;overflow-x:auto;font-size:13px;line-height:1.6;margin:0;tab-size:2}
+.code .lang{position:absolute;top:0;left:0;font:600 10.5px/1 var(--mono);color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;padding:9px 18px;border-bottom:1px solid var(--code-line);border-right:1px solid var(--code-line)}
+.code .copy{position:absolute;top:4px;right:6px;min-height:26px;font:500 11px/1 var(--mono);padding:6px 10px;background:transparent;color:#cbd5e1;border:1px solid #334155;border-radius:3px;transition:background-color .2s}
+.code .copy:hover{background:#1e293b}
+.c-k{color:#93c5fd}.c-s{color:#86efac}.c-c{color:#64748b;font-style:italic}.c-g{color:#4ade80;font-weight:600}.c-r{color:#fca5a5;font-weight:600}
 
-/* callouts */
-.call{border-radius:12px;padding:14px 16px 14px 48px;margin:16px 0;position:relative;border:1px solid transparent}
-.call::before{position:absolute;left:16px;top:13px;font-size:1.1rem}
-.call.tip{background:var(--blue-soft);border-color:color-mix(in srgb,var(--blue) 25%,transparent)}.call.tip::before{content:"💡"}
-.call.warn{background:var(--red-soft);border-color:color-mix(in srgb,var(--red) 25%,transparent)}.call.warn::before{content:"⚠️"}
-.call.prod{background:var(--green-soft);border-color:color-mix(in srgb,var(--green) 25%,transparent)}.call.prod::before{content:"🏢"}
-.call.int{background:var(--purple-soft);border-color:color-mix(in srgb,var(--purple) 25%,transparent)}.call.int::before{content:"🎯"}
-.call.lesson{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}.call.lesson::before{content:"🧠"}
-.call b:first-child{display:block;margin-bottom:2px}
-.call p{margin:.3em 0}
+/* ---------- callouts ---------- */
+.call{margin:18px 0;padding:14px 18px;border:1px solid var(--line);border-left:3px solid var(--ink);background:var(--surface);border-radius:0 2px 2px 0}
+.call::before{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;color:var(--muted)}
+.call.tip::before{content:"Note"}
+.call.warn{border-left-color:var(--red)}.call.warn::before{content:"Warning";color:var(--red)}
+.call.prod{border-left-color:var(--accent)}.call.prod::before{content:"In production";color:var(--accent)}
+.call.int::before{content:"Interview"}
+.call.lesson{border-left-color:var(--accent);background:var(--accent-soft)}.call.lesson::before{content:"Key lesson";color:var(--accent)}
+.call>b:first-child{display:block;margin-bottom:2px;font-weight:600}
+.call p{margin:.35em 0}
 
-/* cards */
-.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:16px 0}
-.card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
-.card .ico{font-size:1.5rem}
-.card h4{margin:6px 0 4px}
-.card p{margin:0;color:var(--muted);font-size:.93rem}
+/* ---------- cards ---------- */
+.grid{display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:18px 0;border:1px solid var(--line);border-radius:2px}
+.card{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0}
+.card h4{margin:0 0 6px;font:600 13px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.card p{margin:0;color:var(--muted);font-size:14.5px}
 
-/* lab */
-.lab{border:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);border-radius:14px;padding:6px 20px 14px;margin:22px 0;background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
-.lab>.tag{display:inline-block;background:var(--accent);color:#111;font-weight:700;font-size:.75rem;padding:3px 10px;border-radius:999px;margin-top:12px;letter-spacing:.05em}
-ol.steps{counter-reset:s;list-style:none;padding-left:0}
-ol.steps>li{counter-increment:s;position:relative;padding-left:40px;margin:12px 0}
-ol.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--panel);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+/* ---------- labs ---------- */
+.lab{border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:0 0 2px 2px;padding:4px 22px 16px;margin:26px 0}
+.lab>.tag{display:inline-block;font:700 11px/1 var(--mono);letter-spacing:.1em;color:var(--accent);margin-top:16px}
+ol.steps{counter-reset:s;list-style:none;padding-left:0;margin:10px 0}
+ol.steps>li{counter-increment:s;position:relative;padding-left:42px;margin:14px 0}
+ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:1px;font:600 13px/1 var(--mono);color:var(--accent);border:1px solid var(--line-strong);padding:5px 5px;border-radius:2px;min-width:30px;text-align:center}
 
-/* diagrams */
-figure{margin:20px 0}
-figure svg{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:12px}
-figcaption{font-size:.85rem;color:var(--muted);text-align:center;margin-top:6px}
-svg text{font-family:system-ui,sans-serif;fill:var(--ink)}
-svg .box{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
-svg .b-blue{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1.5}
-svg .b-green{fill:var(--green-soft);stroke:var(--green);stroke-width:1.5}
+/* ---------- diagrams ---------- */
+figure{margin:22px 0}
+figure svg{width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:2px}
+figcaption{font:400 13px/1.5 var(--mono);color:var(--muted);margin-top:8px}
+figcaption::before{content:"Fig. ";color:var(--accent)}
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .box,svg .b-blue,svg .b-acc,svg .b-pur{fill:var(--panel);stroke:var(--line-strong);stroke-width:1.25}
+svg .b-acc{stroke:var(--ink);stroke-width:1.25}
+svg .b-pur{stroke:var(--ink);stroke-dasharray:4 3}
+svg .b-green{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
 svg .b-red{fill:var(--red-soft);stroke:var(--red);stroke-width:1.5}
-svg .b-acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
-svg .b-pur{fill:var(--purple-soft);stroke:var(--purple);stroke-width:1.5}
-svg .ln{stroke:var(--muted);stroke-width:1.6;fill:none}
-svg .ln-g{stroke:var(--green);stroke-width:1.8;fill:none}
-svg .ln-r{stroke:var(--red);stroke-width:1.8;fill:none}
+svg rect{rx:3px}
+svg .ln{stroke:var(--muted);stroke-width:1.4;fill:none}
+svg .ln-g{stroke:var(--accent);stroke-width:1.6;fill:none}
+svg .ln-r{stroke:var(--red);stroke-width:1.6;fill:none}
 svg .sm{font-size:12px;fill:var(--muted)}
-svg .t-b{font-weight:700}
-svg .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+svg .t-b{font-weight:600}
+svg .mono{font-family:var(--mono);font-size:11.5px}
 
-/* arn */
-.arn{display:flex;flex-wrap:wrap;gap:2px;font-family:ui-monospace,Menlo,monospace;font-size:.95rem;margin:16px 0}
-.arn span{padding:8px 8px 22px;border-radius:8px;position:relative;background:var(--bg);border:1px solid var(--line)}
-.arn span i{position:absolute;left:8px;bottom:3px;font-style:normal;font-family:system-ui;font-size:.68rem;color:var(--muted);white-space:nowrap}
-.arn .sep{background:none;border:none;padding:8px 0 22px}
+/* ---------- arn ---------- */
+.arn{display:flex;flex-wrap:wrap;gap:0;font:500 14px/1 var(--mono);margin:16px 0;border:1px solid var(--line);border-radius:2px;width:fit-content;max-width:100%}
+.arn span{padding:12px 10px 26px;position:relative;border-right:1px solid var(--line)}
+.arn span:last-child{border-right:none}
+.arn span i{position:absolute;left:10px;bottom:7px;font:400 10.5px/1 var(--sans);color:var(--muted);white-space:nowrap}
+.arn .sep{padding:12px 2px 26px;color:var(--accent);border-right:1px solid var(--line)}
 
-/* details */
-details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;background:var(--bg)}
-details summary{cursor:pointer;font-weight:600}
-details[open] summary{margin-bottom:8px}
+/* ---------- details ---------- */
+details{border-bottom:1px solid var(--line);padding:0;margin:0}
+details:first-of-type{border-top:1px solid var(--line)}
+details summary{list-style:none;font-weight:600;padding:14px 32px 14px 0;position:relative;min-height:44px}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";position:absolute;right:4px;top:12px;font:500 18px/1 var(--mono);color:var(--muted);transition:transform .2s}
+details[open] summary::after{content:"–"}
+details>p{margin:0 0 16px;color:var(--ink-2)}
 
-.check li{list-style:none;margin:6px 0}
-.check{padding-left:4px}
-.toc-num{color:var(--accent);font-weight:700;margin-right:6px}
-footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
-@media print{.side,.menu-btn,.copy{display:none}main{margin:0}section{break-inside:avoid-page}}
+/* ---------- checklist ---------- */
+ul.check{padding-left:0;margin:12px 0}
+.check li{list-style:none;margin:0;padding:9px 0 9px 30px;position:relative;border-bottom:1px solid var(--line)}
+.check li:last-child{border-bottom:none}
+.check li::before{content:"";position:absolute;left:2px;top:13px;width:14px;height:14px;border:1.5px solid var(--accent);border-radius:2px}
+.check li::after{content:"";position:absolute;left:7px;top:15px;width:4px;height:8px;border:solid var(--accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+ul{padding-left:1.2em}
+li{margin:.25em 0}
+footer{color:var(--muted);font:400 12px/1.5 var(--mono);border-top:1px solid var(--line);padding-top:24px;margin-top:40px}
+@media print{.side,.menu-btn,.copy{display:none}main{margin:0;padding:0}section{break-inside:auto}.code{break-inside:avoid}}
 </style>
 </head>
 <body>
-<button class="btn menu-btn" onclick="document.body.classList.toggle('nav-open')">☰ Menu</button>
+<button class="btn menu-btn" aria-label="Open navigation" onclick="document.body.classList.toggle('nav-open')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
 
 <aside class="side">
-  <div class="brand"><span class="logo">AWS</span> Notes</div>
-  <div class="sub">01 · Identity &amp; Access Management</div>
+  <div class="brand"><span class="logo">AWS</span>notes/</div>
+  <div class="sub">ch.01 — iam</div>
   <nav id="toc">
     <div class="grp">Foundations</div>
-    <a href="#what"><span class="toc-num">1</span>What IAM is</a>
-    <a href="#blocks"><span class="toc-num">2</span>Building blocks</a>
-    <a href="#secure"><span class="toc-num">3</span>Lab · Secure the account</a>
+    <a href="#what"><span class="toc-num">01</span>What IAM is</a>
+    <a href="#blocks"><span class="toc-num">02</span>Building blocks</a>
+    <a href="#secure"><span class="toc-num">03</span>Lab · Secure the account</a>
     <div class="grp">Policies</div>
-    <a href="#policies"><span class="toc-num">4</span>Policy JSON &amp; ARNs</a>
-    <a href="#eval"><span class="toc-num">5</span>How AWS decides</a>
-    <a href="#lab-policy"><span class="toc-num">6</span>Lab · Least privilege &amp; Deny</a>
+    <a href="#policies"><span class="toc-num">04</span>Policy JSON &amp; ARNs</a>
+    <a href="#eval"><span class="toc-num">05</span>How AWS decides</a>
+    <a href="#lab-policy"><span class="toc-num">06</span>Lab · Least privilege &amp; Deny</a>
     <div class="grp">Roles</div>
-    <a href="#roles"><span class="toc-num">7</span>Roles explained</a>
-    <a href="#lab-ec2"><span class="toc-num">8</span>Lab · EC2 role (no keys)</a>
-    <a href="#lab-switch"><span class="toc-num">9</span>Lab · Switch role</a>
+    <a href="#roles"><span class="toc-num">07</span>Roles explained</a>
+    <a href="#lab-ec2"><span class="toc-num">08</span>Lab · EC2 role (no keys)</a>
+    <a href="#lab-switch"><span class="toc-num">09</span>Lab · Switch role</a>
     <a href="#lab-oidc"><span class="toc-num">10</span>Lab · GitHub OIDC</a>
     <a href="#keys"><span class="toc-num">11</span>Keys vs OIDC &amp; leaks</a>
     <div class="grp">Operate</div>
@@ -169,34 +203,35 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
     <a href="#cheat"><span class="toc-num">17</span>Cheat sheet &amp; glossary</a>
   </nav>
   <div class="tools">
-    <button class="btn" id="theme">🌓 Theme</button>
-    <button class="btn" onclick="window.print()">🖨 Print</button>
+    <button class="btn" id="theme" aria-label="Toggle light or dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Theme</button>
+    <button class="btn" onclick="window.print()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
   </div>
 </aside>
 
 <main>
 
 <section class="hero">
-  <span class="kicker">AWS Notes · Chapter 1</span>
+  <span class="kicker">AWS Notes / Chapter 01</span>
   <h1>IAM: Identity &amp; Access Management</h1>
   <p class="lead">Everything from my IAM study session: the concepts, every hands-on lab with real outputs, the mistakes I made and how I fixed them, and how it's all used in production.</p>
+  <div class="meta"><div><b>17</b><span>sections</span></div><div><b>6</b><span>labs</span></div><div><b>8</b><span>diagrams</span></div><div><b>14</b><span>interview Qs</span></div></div>
   <div class="pills">
-    <span class="pill">👤 Users · Groups</span><span class="pill">📜 Policies</span><span class="pill">🚫 Implicit vs explicit deny</span>
-    <span class="pill">🎩 Roles · STS</span><span class="pill">🖥 EC2 instance role</span><span class="pill">🔁 Switch role</span>
-    <span class="pill">🐙 GitHub OIDC</span><span class="pill">🔑 Key leak response</span><span class="pill">🕵️ CloudTrail</span>
+    <span class="pill">Users · Groups</span><span class="pill">Policies</span><span class="pill">Implicit vs explicit deny</span>
+    <span class="pill">Roles · STS</span><span class="pill">EC2 instance role</span><span class="pill">Switch role</span>
+    <span class="pill">GitHub OIDC</span><span class="pill">Key leak response</span><span class="pill">CloudTrail</span>
   </div>
   <p class="note">Account ID shown as <code>123456789012</code> and GitHub user as <code>YOUR_GH_USER</code>. Replace them with your own. Region used: Frankfurt <code>eu-central-1</code>.</p>
 </section>
 
 <!-- 1 -->
 <section id="what">
-  <span class="kicker">Section 1</span>
+  <span class="kicker">01</span>
   <h2>What IAM is</h2>
   <p>IAM is the <b>security desk</b> of an AWS account. Every request to AWS, whether a console click, a CLI command or an app's SDK call, passes two checks:</p>
   <div class="grid">
-    <div class="card"><div class="ico">🪪</div><h4>1 · Authentication</h4><p><b>Who are you?</b> Password + MFA, an access key, or temporary credentials from a role.</p></div>
-    <div class="card"><div class="ico">✅</div><h4>2 · Authorization</h4><p><b>Are you allowed to do this?</b> IAM evaluates every policy that applies and answers allow or deny.</p></div>
-    <div class="card"><div class="ico">🌍</div><h4>Global &amp; free</h4><p>IAM isn't tied to a region and costs nothing. One set of users and roles covers the whole account.</p></div>
+    <div class="card"><h4>1 · Authentication</h4><p><b>Who are you?</b> Password + MFA, an access key, or temporary credentials from a role.</p></div>
+    <div class="card"><h4>2 · Authorization</h4><p><b>Are you allowed to do this?</b> IAM evaluates every policy that applies and answers allow or deny.</p></div>
+    <div class="card"><h4>Global &amp; free</h4><p>IAM isn't tied to a region and costs nothing. One set of users and roles covers the whole account.</p></div>
   </div>
   <div class="call lesson"><b>The one sentence to remember</b>
     <p><b>Who</b> (principal) can do <b>what</b> (action) on <b>which thing</b> (resource) under <b>which conditions</b>.</p></div>
@@ -215,7 +250,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 2 -->
 <section id="blocks">
-  <span class="kicker">Section 2</span>
+  <span class="kicker">02</span>
   <h2>The building blocks</h2>
   <div class="tbl"><table>
     <tr><th>Thing</th><th>What it is</th><th>Used in production?</th></tr>
@@ -231,7 +266,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 3 -->
 <section id="secure">
-  <span class="kicker">Section 3 · Lab</span>
+  <span class="kicker">03 · Lab</span>
   <h2>Lab: Secure a brand-new account</h2>
   <p>This is the first thing every company does with a new AWS account, and it's what I did first.</p>
 
@@ -274,7 +309,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 4 -->
 <section id="policies">
-  <span class="kicker">Section 4</span>
+  <span class="kicker">04</span>
   <h2>Policies: reading the JSON</h2>
   <p>A policy is a short JSON document. The AWS managed policy <code>AdministratorAccess</code> is the simplest one there is:</p>
 <div class="code"><span class="lang">json</span><pre>{
@@ -355,7 +390,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 5 -->
 <section id="eval">
-  <span class="kicker">Section 5</span>
+  <span class="kicker">05</span>
   <h2>How AWS decides: the evaluation logic</h2>
   <figure>
     <svg viewBox="0 0 760 300" role="img" aria-label="Policy evaluation flow">
@@ -400,7 +435,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 6 -->
 <section id="lab-policy">
-  <span class="kicker">Section 6 · Lab</span>
+  <span class="kicker">06 · Lab</span>
   <h2>Lab: Least privilege, implicit deny &amp; explicit Deny</h2>
   <p>Goal: a test user <code>test-viewer</code> who can only <i>look</i> at S3, then exactly one extra permission, then a Deny that beats full access.</p>
 
@@ -414,12 +449,12 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
     <h4>Round 1: read-only</h4>
     <div class="tbl"><table>
       <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
-      <tr><td>1</td><td>S3 → see and open the bucket</td><td class="ok">✅</td><td><code>s3:List*</code> covers ListAllMyBuckets + ListBucket</td></tr>
-      <tr><td>2</td><td>Download a file</td><td class="ok">✅</td><td><code>s3:Get*</code> covers GetObject</td></tr>
-      <tr><td>3</td><td>Upload</td><td class="no">❌</td><td><code>s3:PutObject</code> not allowed → implicit deny</td></tr>
-      <tr><td>4</td><td>Delete</td><td class="no">❌</td><td><code>s3:DeleteObject</code> not allowed</td></tr>
-      <tr><td>5</td><td>EC2 → Instances</td><td class="no">❌</td><td>Nothing allows <code>ec2:*</code></td></tr>
-      <tr><td>6</td><td>IAM → Users</td><td class="no">❌</td><td>Nothing allows <code>iam:*</code></td></tr>
+      <tr><td>1</td><td>S3 → see and open the bucket</td><td><span class="st ok">✓ allowed</span></td><td><code>s3:List*</code> covers ListAllMyBuckets + ListBucket</td></tr>
+      <tr><td>2</td><td>Download a file</td><td><span class="st ok">✓ allowed</span></td><td><code>s3:Get*</code> covers GetObject</td></tr>
+      <tr><td>3</td><td>Upload</td><td><span class="st no">✗ denied</span></td><td><code>s3:PutObject</code> not allowed → implicit deny</td></tr>
+      <tr><td>4</td><td>Delete</td><td><span class="st no">✗ denied</span></td><td><code>s3:DeleteObject</code> not allowed</td></tr>
+      <tr><td>5</td><td>EC2 → Instances</td><td><span class="st no">✗ denied</span></td><td>Nothing allows <code>ec2:*</code></td></tr>
+      <tr><td>6</td><td>IAM → Users</td><td><span class="st no">✗ denied</span></td><td>Nothing allows <code>iam:*</code></td></tr>
     </table></div>
 
     <h4>Round 2: write your own least-privilege policy</h4>
@@ -442,9 +477,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
       <p><code>…:*</code> instead of <code>…/*</code>: the wrong separator, which matches nothing.</p></div>
     <div class="tbl"><table>
       <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
-      <tr><td>7</td><td>Upload to <code>iam-lab</code></td><td class="ok">✅</td><td>My policy allows PutObject there</td></tr>
-      <tr><td>8</td><td>Upload to <code>iam-lab-2</code></td><td class="no">❌</td><td>Not in my <code>Resource</code></td></tr>
-      <tr><td>9</td><td>Delete</td><td class="no">❌</td><td>Still not allowed anywhere</td></tr>
+      <tr><td>7</td><td>Upload to <code>iam-lab</code></td><td><span class="st ok">✓ allowed</span></td><td>My policy allows PutObject there</td></tr>
+      <tr><td>8</td><td>Upload to <code>iam-lab-2</code></td><td><span class="st no">✗ denied</span></td><td>Not in my <code>Resource</code></td></tr>
+      <tr><td>9</td><td>Delete</td><td><span class="st no">✗ denied</span></td><td>Still not allowed anywhere</td></tr>
     </table></div>
 
     <h4>Round 3: explicit Deny beats full access</h4>
@@ -462,9 +497,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 }</pre></div>
     <div class="tbl"><table>
       <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
-      <tr><td>10</td><td>Upload to <code>iam-lab-2</code></td><td class="ok">✅</td><td>FullAccess allows it</td></tr>
-      <tr><td>11</td><td>Delete in <code>iam-lab-2</code></td><td class="ok">✅</td><td>The Deny only covers <code>iam-lab</code>. <i>I guessed ❌ here; the bucket was also empty at first, so upload a file before testing a delete.</i></td></tr>
-      <tr><td>12</td><td>Delete in <code>iam-lab</code></td><td class="no">❌</td><td><b>Explicit Deny wins</b> over FullAccess</td></tr>
+      <tr><td>10</td><td>Upload to <code>iam-lab-2</code></td><td><span class="st ok">✓ allowed</span></td><td>FullAccess allows it</td></tr>
+      <tr><td>11</td><td>Delete in <code>iam-lab-2</code></td><td><span class="st ok">✓ allowed</span></td><td>The Deny only covers <code>iam-lab</code>. <i>I guessed ✗ here; the bucket was also empty at first, so upload a file before testing a delete.</i></td></tr>
+      <tr><td>12</td><td>Delete in <code>iam-lab</code></td><td><span class="st no">✗ denied</span></td><td><b>Explicit Deny wins</b> over FullAccess</td></tr>
     </table></div>
   </div>
 
@@ -479,14 +514,14 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 7 -->
 <section id="roles">
-  <span class="kicker">Section 7</span>
+  <span class="kicker">07</span>
   <h2>Roles explained</h2>
   <p><b>A user is who you are</b> (a permanent ID card). <b>A role is a hat you put on for a while</b>, with its own powers.</p>
   <div class="grid">
-    <div class="card"><div class="ico">🎩</div><h4>Rule 1</h4><p>While wearing the hat you have <b>only the hat's permissions</b>. Yours, including your Denys, are set aside.</p></div>
-    <div class="card"><div class="ico">↩️</div><h4>Rule 2</h4><p>Take it off ("Switch back", or the session expires) and you're back to your own permissions.</p></div>
-    <div class="card"><div class="ico">🔐</div><h4>Rule 3</h4><p>Not everyone may wear it: the role's <b>trust policy</b> must allow you (and for accounts, your own policy too).</p></div>
-    <div class="card"><div class="ico">⏳</div><h4>Rule 4</h4><p>You get <b>temporary keys</b> from STS (<code>ASIA…</code>) that expire: 1 h by default for people, a few hours for EC2, auto-renewed for services.</p></div>
+    <div class="card"><h4>Rule 1</h4><p>While wearing the hat you have <b>only the hat's permissions</b>. Yours, including your Denys, are set aside.</p></div>
+    <div class="card"><h4>Rule 2</h4><p>Take it off ("Switch back", or the session expires) and you're back to your own permissions.</p></div>
+    <div class="card"><h4>Rule 3</h4><p>Not everyone may wear it: the role's <b>trust policy</b> must allow you (and for accounts, your own policy too).</p></div>
+    <div class="card"><h4>Rule 4</h4><p>You get <b>temporary keys</b> from STS (<code>ASIA…</code>) that expire: 1 h by default for people, a few hours for EC2, auto-renewed for services.</p></div>
   </div>
 
   <h3>Every role has two policies</h3>
@@ -531,7 +566,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
 
 <!-- 8 -->
 <section id="lab-ec2">
-  <span class="kicker">Section 8 · Lab</span>
+  <span class="kicker">08 · Lab</span>
   <h2>Lab: An EC2 server reads S3 with no keys</h2>
   <p><b>The problem:</b> an app on a server needs S3. Pasting access keys into code risks leaks (GitHub, screenshots, ex-employees), the keys never expire, and nobody rotates them. <b>The solution:</b> attach a role to the server.</p>
 
@@ -595,11 +630,11 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
   "Arn": "arn:aws:<span class="c-g">sts</span>::123456789012:<span class="c-g">assumed-role/lab-ec2-s3-reader</span>/i-03721a8d173d8dd6c"
 }
 
-$ aws s3 ls s3://iam-lab-123456789012                  <span class="c-g"># ✅ ListBucket on bucket</span>
-$ aws s3 cp s3://iam-lab-123456789012/file.docx .      <span class="c-g"># ✅ GetObject on /*</span>
-$ aws s3 ls                                            <span class="c-r"># ❌ s3:ListAllMyBuckets not allowed</span>
-$ aws s3 ls s3://iam-lab-2-123456789012                <span class="c-r"># ❌ ListBucket only on bucket 1</span>
-$ aws s3 cp x.txt s3://iam-lab-123456789012/           <span class="c-r"># ❌ s3:PutObject not allowed</span>
+$ aws s3 ls s3://iam-lab-123456789012                  <span class="c-g"># ✓ ListBucket on bucket</span>
+$ aws s3 cp s3://iam-lab-123456789012/file.docx .      <span class="c-g"># ✓ GetObject on /*</span>
+$ aws s3 ls                                            <span class="c-r"># ✗ s3:ListAllMyBuckets not allowed</span>
+$ aws s3 ls s3://iam-lab-2-123456789012                <span class="c-r"># ✗ ListBucket only on bucket 1</span>
+$ aws s3 cp x.txt s3://iam-lab-123456789012/           <span class="c-r"># ✗ s3:PutObject not allowed</span>
 $ ls ~/.aws
 cli                                                    <span class="c-c"># just a cache, no credentials file</span></pre></div>
     <div class="tbl"><table>
@@ -624,7 +659,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
     <div class="call prod"><b>Why IMDSv2 (the token step) exists</b><p>In 2019 Capital One was breached when an attacker tricked a web app (SSRF) into fetching these keys from 169.254.169.254. IMDSv2's PUT-token step blocks that trick. Companies <b>enforce IMDSv2</b> on every server, and Amazon Linux 2023 uses it by default.</p></div>
 
     <h4>F. Change permissions live</h4>
-    <p>Attach <code>lab-upload-iam-lab-bucket</code> to the <b>role</b>, wait about 10 s, and re-run the upload → <span class="ok">✅</span>, with <b>no restart and no change on the server</b>. Edit the role once, and every server using it is updated.</p>
+    <p>Attach <code>lab-upload-iam-lab-bucket</code> to the <b>role</b>, wait about 10 s, and re-run the upload → <span class="st ok">✓ allowed</span>, with <b>no restart and no change on the server</b>. Edit the role once, and every server using it is updated.</p>
     <h4>G. Clean up</h4>
     <p>EC2 → instance → <b>Terminate</b>. Terminated instances stay listed for about an hour, then disappear, and cost nothing. <i>Stopped</i> is different: the server and its disk still exist.</p>
   </div>
@@ -661,7 +696,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 <!-- 9 -->
 <section id="lab-switch">
-  <span class="kicker">Section 9 · Lab</span>
+  <span class="kicker">09 · Lab</span>
   <h2>Lab: A person switching into a role</h2>
   <p>In companies, an engineer's normal login is <b>read-only</b>. When they actually need to change something, they <b>switch into a more powerful role</b>, do the job, and switch back. Every switch is logged.</p>
 
@@ -682,7 +717,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
     <ol class="steps">
       <li><b>Reset test-viewer</b>: remove <code>AmazonS3FullAccess</code> and <code>lab-upload-iam-lab-bucket</code>. Keep ReadOnly + <code>deny-delete-lab-files</code>.</li>
       <li><b>Create role</b> → trusted entity <b>AWS account → This account</b> (in production, tick <i>Require MFA</i>) → <code>AmazonS3FullAccess</code> → name <code>lab-s3-elevated</code>.</li>
-      <li><b>Try switching</b> (incognito, as test-viewer): name at top right → <b>Switch role</b> → account <code>123456789012</code>, role <code>lab-s3-elevated</code>, display <code>Elevated</code>.<br>Result: <span class="no">❌ "Invalid information in one or more fields"</span>. That's expected; the message is vague on purpose so attackers can't probe role names.</li>
+      <li><b>Try switching</b> (incognito, as test-viewer): name at top right → <b>Switch role</b> → account <code>123456789012</code>, role <code>lab-s3-elevated</code>, display <code>Elevated</code>.<br>Result: <span class="st no">✗ "Invalid information in one or more fields"</span>. That's expected; the message is vague on purpose so attackers can't probe role names.</li>
       <li><b>Allow the user to switch</b>: inline policy <code>allow-switch-lab-s3-elevated</code> on test-viewer:
 <div class="code"><span class="lang">json</span><pre>{
   <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
@@ -699,11 +734,11 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
     </ol>
     <div class="tbl"><table>
       <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
-      <tr><td>13</td><td>Switch before step 4</td><td class="no">❌</td><td>Only one side of the handshake exists</td></tr>
-      <tr><td>14</td><td>Switch after step 4</td><td class="ok">✅</td><td>Both sides allow it</td></tr>
-      <tr><td>15</td><td>As the role: delete in <code>iam-lab</code></td><td class="ok">✅</td><td>You <b>are the role</b> now; the user's Deny doesn't come with you</td></tr>
-      <tr><td>16</td><td>As the role: IAM → Users</td><td class="no">❌</td><td>The role only has S3</td></tr>
-      <tr><td>17</td><td>Switch back → delete</td><td class="no">❌</td><td>You're test-viewer again, and the Deny is back. <i>I guessed ✅; the role's permissions <b>replace</b> yours, they don't add.</i></td></tr>
+      <tr><td>13</td><td>Switch before step 4</td><td><span class="st no">✗ denied</span></td><td>Only one side of the handshake exists</td></tr>
+      <tr><td>14</td><td>Switch after step 4</td><td><span class="st ok">✓ allowed</span></td><td>Both sides allow it</td></tr>
+      <tr><td>15</td><td>As the role: delete in <code>iam-lab</code></td><td><span class="st ok">✓ allowed</span></td><td>You <b>are the role</b> now; the user's Deny doesn't come with you</td></tr>
+      <tr><td>16</td><td>As the role: IAM → Users</td><td><span class="st no">✗ denied</span></td><td>The role only has S3</td></tr>
+      <tr><td>17</td><td>Switch back → delete</td><td><span class="st no">✗ denied</span></td><td>You're test-viewer again, and the Deny is back. <i>I guessed ✓; the role's permissions <b>replace</b> yours, they don't add.</i></td></tr>
     </table></div>
   </div>
 
@@ -712,7 +747,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
     <tr><th></th><th>Normal (<code>test-viewer</code>)</th><th>Elevated (wearing <code>lab-s3-elevated</code>)</th></tr>
     <tr><td>Identity</td><td><code>user/test-viewer</code></td><td><code>assumed-role/lab-s3-elevated/test-viewer</code></td></tr>
     <tr><td>Permissions from</td><td>The user's policies (ReadOnly, Deny, switch permission)</td><td><b>Only</b> the role's policy (S3 full)</td></tr>
-    <tr><td>Upload / delete</td><td class="no">❌</td><td class="ok">✅</td></tr>
+    <tr><td>Upload / delete</td><td><span class="st no">✗ denied</span></td><td><span class="st ok">✓ allowed</span></td></tr>
     <tr><td>Lasts</td><td>Until logout</td><td>1 h by default, then back to normal</td></tr>
     <tr><td>In the logs</td><td>"test-viewer did X"</td><td>"test-viewer <b>switched into</b> lab-s3-elevated, then did X"</td></tr>
   </table></div>
@@ -733,7 +768,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 <!-- 10 -->
 <section id="lab-oidc">
-  <span class="kicker">Section 10 · Lab</span>
+  <span class="kicker">10 · Lab</span>
   <h2>Lab: GitHub Actions → AWS with no keys (OIDC)</h2>
   <p>The same "hat" idea again, except this time the wearer is a <b>GitHub workflow run</b>, and it proves who it is with a <b>signed ID card</b> (an OIDC token).</p>
 
@@ -833,7 +868,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
     <p>Repo → Settings → Secrets: <b>empty</b>. No keys anywhere, and it still deployed.</p>
   </div>
 
-  <h3>🐛 The debugging story: 3 failures, all "Not authorized"</h3>
+  <h3>The debugging story: 3 failures, all "Not authorized"</h3>
   <p>Every failure showed the same unhelpful message: <code>Could not assume role with OIDC: Not authorized to perform sts:AssumeRoleWithWebIdentity</code>. That message means GitHub issued a card (so <code>id-token: write</code> was fine), but the trust policy didn't match it.</p>
   <div class="tbl"><table>
     <tr><th>#</th><th>Cause</th><th>Fix</th></tr>
@@ -853,13 +888,13 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
   <div class="call warn"><b>Other causes of the same error</b><p>Wrong case in the username (<code>StringEquals</code>/<code>StringLike</code> are case-sensitive) · branch is <code>master</code> not <code>main</code> · jobs using <code>environment:</code> get <code>…:environment:&lt;name&gt;</code> instead of <code>:ref:</code> · typo in <code>role-to-assume</code> · wrong provider URL or audience.</p><p>A wildcard like <code>repo:YOUR_GH_USER/aws-oidc-lab:*</code> (with <code>StringLike</code>) is acceptable. <b>Never use <code>repo:*</code></b>.</p></div>
 
   <h3>Branch protection test</h3>
-  <p>Created branch <code>test</code> → Actions → Run workflow from <code>test</code> → <span class="no">❌ Not authorized</span>. The card said <code>…ref:refs/heads/test</code>, and the role only accepts <code>main</code>. <b>Only reviewed code on main can deploy.</b></p>
+  <p>Created branch <code>test</code> → Actions → Run workflow from <code>test</code> → <span class="st no">✗ Not authorized</span>. The card said <code>…ref:refs/heads/test</code>, and the role only accepts <code>main</code>. <b>Only reviewed code on main can deploy.</b></p>
   <p class="muted">Harmless warnings seen: "Node.js 20 is deprecated" and "ubuntu-latest will migrate to Ubuntu 26". These are GitHub notices, unrelated to IAM.</p>
 </section>
 
 <!-- 11 -->
 <section id="keys">
-  <span class="kicker">Section 11</span>
+  <span class="kicker">11</span>
   <h2>Access keys (old way) vs OIDC, and a real key leak</h2>
   <h3>The old way, in 4 steps</h3>
   <ol class="steps">
@@ -874,7 +909,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
           <span class="c-k">aws-secret-access-key:</span> ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           <span class="c-k">aws-region:</span> eu-central-1</pre></div>
 
-  <div class="call warn"><b>🚨 What actually happened: I leaked a real key</b>
+  <div class="call warn"><b>What actually happened: I leaked a real key</b>
     <p>While testing, I pasted the real secret access key into a chat <b>twice</b>. Anything pasted into a chat, ticket, Slack or log counts as <b>leaked</b>.</p>
     <p><b>Correct response (done):</b> IAM → user → Security credentials → key → <b>Deactivate</b> → <b>Delete</b> → verify it fails (<code>InvalidClientTokenId</code>) → <code>rm -rf ~/.aws</code> in CloudShell → check CloudTrail for what the key did → create a new key only if still needed.</p>
     <p>With OIDC this can't happen: there's no permanent secret to paste.</p></div>
@@ -903,24 +938,24 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
   <h3>Why companies still have keys, and how to handle them</h3>
   <p>Old pipelines, tools without OIDC support, machines outside AWS (e.g. on-prem Jenkins). GitHub Actions, GitLab, Bitbucket, CircleCI and Azure DevOps all support OIDC, so new setups should use it.</p>
   <ul class="check">
-    <li>☑ <b>One IAM user per pipeline</b>, never a shared or personal user</li>
-    <li>☑ <b>Least privilege</b> on that user</li>
-    <li>☑ Keys only in a <b>secret store</b> (GitHub Secrets, Secrets Manager, Vault), <b>never in code</b></li>
-    <li>☑ <b>Rotate</b> (e.g. every 90 days) and check <b>"Access key last used"</b>; delete unused keys</li>
-    <li>☑ Leak → <b>deactivate immediately</b> → CloudTrail → replace</li>
-    <li>☑ <b>Plan the migration to OIDC</b></li>
+    <li><b>One IAM user per pipeline</b>, never a shared or personal user</li>
+    <li><b>Least privilege</b> on that user</li>
+    <li>Keys only in a <b>secret store</b> (GitHub Secrets, Secrets Manager, Vault), <b>never in code</b></li>
+    <li><b>Rotate</b> (e.g. every 90 days) and check <b>"Access key last used"</b>; delete unused keys</li>
+    <li>Leak → <b>deactivate immediately</b> → CloudTrail → replace</li>
+    <li><b>Plan the migration to OIDC</b></li>
   </ul>
 </section>
 
 <!-- 12 -->
 <section id="audit">
-  <span class="kicker">Section 12</span>
+  <span class="kicker">12</span>
   <h2>CloudTrail &amp; auditing: who did what</h2>
   <p><b>CloudTrail records every API call</b> (console clicks included): who, what, when, from which IP, and whether it worked.</p>
   <div class="grid">
-    <div class="card"><div class="ico">📜</div><h4>Event history</h4><p>On by default, free, last <b>90 days</b> of <i>management events</i>. No trail needed.</p></div>
-    <div class="card"><div class="ico">📦</div><h4>Not included by default</h4><p>S3 file reads and uploads (<i>data events</i>) need a trail with data events, which costs money.</p></div>
-    <div class="card"><div class="ico">🌎</div><h4>Region tip</h4><p>IAM and sign-in events are often in <b>N. Virginia (us-east-1)</b>. If a search is empty, switch region.</p></div>
+    <div class="card"><h4>Event history</h4><p>On by default, free, last <b>90 days</b> of <i>management events</i>. No trail needed.</p></div>
+    <div class="card"><h4>Not included by default</h4><p>S3 file reads and uploads (<i>data events</i>) need a trail with data events, which costs money.</p></div>
+    <div class="card"><h4>Region tip</h4><p>IAM and sign-in events are often in <b>N. Virginia (us-east-1)</b>. If a search is empty, switch region.</p></div>
   </div>
   <div class="lab"><span class="tag">LAB 6 · CONSOLE</span>
     <ol class="steps">
@@ -941,7 +976,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 <!-- 13 -->
 <section id="advanced">
-  <span class="kicker">Section 13</span>
+  <span class="kicker">13</span>
   <h2>Conditions, boundaries, Identity Center, SCPs</h2>
 
   <h3>1 · Conditions: "…but only if…"</h3>
@@ -1000,35 +1035,35 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 <!-- 14 -->
 <section id="prod">
-  <span class="kicker">Section 14</span>
+  <span class="kicker">14</span>
   <h2>Production checklist</h2>
   <ul class="check">
-    <li>☑ <b>Multi-account</b> with AWS Organizations: prod / staging / dev / security / log-archive</li>
-    <li>☑ <b>Identity Center (SSO)</b> for all humans, and no IAM users for people</li>
-    <li>☑ <b>Root</b>: hardware MFA, no access keys, used only for break-glass; alert on root login</li>
-    <li>☑ <b>Roles for every workload</b>: EC2 instance profiles, Lambda execution roles, ECS task roles, EKS Pod Identity / IRSA</li>
-    <li>☑ <b>OIDC for CI/CD</b>, with <code>sub</code> locked to repo + branch or environment</li>
-    <li>☑ <b>Least privilege</b>: customer-managed policies with exact ARNs; Access Analyzer to trim unused permissions</li>
-    <li>☑ <b><code>iam:PassRole</code></b> limited to specific roles + <code>iam:PassedToService</code></li>
-    <li>☑ <b>Permission boundaries</b> where developers create roles</li>
-    <li>☑ <b>SCP guardrails</b>: regions, CloudTrail protection, no leaving the org</li>
-    <li>☑ <b>IMDSv2 enforced</b> on all EC2 instances</li>
-    <li>☑ <b>Org-wide CloudTrail</b> to a locked bucket, plus alerts</li>
-    <li>☑ <b>IAM as code</b> (Terraform / CloudFormation) reviewed through pull requests; no console changes in prod</li>
-    <li>☑ Regular <b>credential report</b> review: MFA, old keys, unused users</li>
+    <li><b>Multi-account</b> with AWS Organizations: prod / staging / dev / security / log-archive</li>
+    <li><b>Identity Center (SSO)</b> for all humans, and no IAM users for people</li>
+    <li><b>Root</b>: hardware MFA, no access keys, used only for break-glass; alert on root login</li>
+    <li><b>Roles for every workload</b>: EC2 instance profiles, Lambda execution roles, ECS task roles, EKS Pod Identity / IRSA</li>
+    <li><b>OIDC for CI/CD</b>, with <code>sub</code> locked to repo + branch or environment</li>
+    <li><b>Least privilege</b>: customer-managed policies with exact ARNs; Access Analyzer to trim unused permissions</li>
+    <li><b><code>iam:PassRole</code></b> limited to specific roles + <code>iam:PassedToService</code></li>
+    <li><b>Permission boundaries</b> where developers create roles</li>
+    <li><b>SCP guardrails</b>: regions, CloudTrail protection, no leaving the org</li>
+    <li><b>IMDSv2 enforced</b> on all EC2 instances</li>
+    <li><b>Org-wide CloudTrail</b> to a locked bucket, plus alerts</li>
+    <li><b>IAM as code</b> (Terraform / CloudFormation) reviewed through pull requests; no console changes in prod</li>
+    <li>Regular <b>credential report</b> review: MFA, old keys, unused users</li>
   </ul>
 </section>
 
 <!-- 15 -->
 <section id="mistakes">
-  <span class="kicker">Section 15</span>
+  <span class="kicker">15</span>
   <h2>Common mistakes (several of them mine)</h2>
   <div class="tbl"><table>
     <tr><th>Mistake</th><th>Symptom</th><th>Fix</th></tr>
     <tr><td>Typo in an action (<code>s3:PutObjec</code>)</td><td>Silently allows nothing</td><td>Use the editor's validation and Access Analyzer policy checks</td></tr>
     <tr><td><code>bucket:*</code> or missing <code>/*</code></td><td>AccessDenied on files</td><td>Bucket ARN for List, <code>bucket/*</code> for Get/Put/Delete</td></tr>
-    <tr><td>Guessing a Deny covers more than its Resource</td><td>Unexpected ✅</td><td>A Deny only matches its own Action + Resource</td></tr>
-    <tr><td>Thinking a role adds to your permissions</td><td>Unexpected ❌ / ✅</td><td>A role <b>replaces</b> your permissions while you wear it</td></tr>
+    <tr><td>Guessing a Deny covers more than its Resource</td><td>Unexpected ✓</td><td>A Deny only matches its own Action + Resource</td></tr>
+    <tr><td>Thinking a role adds to your permissions</td><td>Unexpected ✗ / ✓</td><td>A role <b>replaces</b> your permissions while you wear it</td></tr>
     <tr><td>Trust policy typo (<code>aws-oidc-la</code>)</td><td>"Not authorized to perform sts:AssumeRole…"</td><td>Compare the caller's <code>sub</code> with the policy character by character</td></tr>
     <tr><td>Debug step after the failing step</td><td>Debug output never appears</td><td>Put diagnostics before the step that fails</td></tr>
     <tr><td>Trusting an out-of-date wizard or tutorial</td><td>Correct-looking config fails</td><td>Search the exact error; check recent changelogs and issues</td></tr>
@@ -1042,7 +1077,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 <!-- 16 -->
 <section id="interview">
-  <span class="kicker">Section 16</span>
+  <span class="kicker">16</span>
   <h2>Interview Q&amp;A</h2>
   <details><summary>User vs role?</summary><p>A user is a permanent identity with long-term credentials (password / <code>AKIA</code> keys). A role has no credentials of its own; it's assumed temporarily and STS issues short-lived <code>ASIA</code> keys.</p></details>
   <details><summary>Trust policy vs permissions policy?</summary><p>The trust policy (resource-based, with a <code>Principal</code>) says <b>who</b> can assume the role. The permissions policy says <b>what</b> the role can do. Both must allow it.</p></details>
@@ -1062,7 +1097,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 <!-- 17 -->
 <section id="cheat">
-  <span class="kicker">Section 17</span>
+  <span class="kicker">17</span>
   <h2>Cheat sheet &amp; glossary</h2>
   <h3>Handy CLI</h3>
 <div class="code"><span class="lang">bash</span><pre><span class="c-c"># Who am I right now? (user, role session, which account)</span>
@@ -1091,14 +1126,14 @@ aws configure sso</pre></div>
 
   <h3>Cleanup checklist (labs)</h3>
   <ul class="check">
-    <li>☑ Users <code>test-viewer</code>, <code>ci-deployer</code> (and any access keys)</li>
-    <li>☑ Roles <code>lab-ec2-s3-reader</code>, <code>lab-s3-elevated</code>, <code>github-actions-oidc-lab</code></li>
-    <li>☑ Customer policies <code>lab-upload-…</code>, <code>lab-read-…</code>, <code>oidc-lab-s3-deploy</code></li>
-    <li>☑ Identity provider <code>token.actions.githubusercontent.com</code> (if not reused)</li>
-    <li>☑ Buckets <code>iam-lab-…</code>, <code>iam-lab-2-…</code>, <code>oidc-lab-…</code> (Empty → Delete)</li>
-    <li>☑ EC2 instance terminated, security group <code>launch-wizard-1</code> deleted</li>
-    <li>☑ GitHub secrets removed · CloudShell <code>rm -rf ~/.aws</code></li>
-    <li>☑ <b>Keep</b>: <code>my-admin</code>, the <code>Admins</code> group, MFA on root + admin</li>
+    <li>Users <code>test-viewer</code>, <code>ci-deployer</code> (and any access keys)</li>
+    <li>Roles <code>lab-ec2-s3-reader</code>, <code>lab-s3-elevated</code>, <code>github-actions-oidc-lab</code></li>
+    <li>Customer policies <code>lab-upload-…</code>, <code>lab-read-…</code>, <code>oidc-lab-s3-deploy</code></li>
+    <li>Identity provider <code>token.actions.githubusercontent.com</code> (if not reused)</li>
+    <li>Buckets <code>iam-lab-…</code>, <code>iam-lab-2-…</code>, <code>oidc-lab-…</code> (Empty → Delete)</li>
+    <li>EC2 instance terminated, security group <code>launch-wizard-1</code> deleted</li>
+    <li>GitHub secrets removed · CloudShell <code>rm -rf ~/.aws</code></li>
+    <li><b>Keep</b>: <code>my-admin</code>, the <code>Admins</code> group, MFA on root + admin</li>
   </ul>
 
   <h3>Glossary</h3>
