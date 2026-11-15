@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Notes · IAM</title>
+<style>
+:root{
+  --bg:#f7f8fb; --panel:#ffffff; --ink:#1b2333; --muted:#5b6578; --line:#e3e7ef;
+  --accent:#e8830c; --accent-soft:#fff3e3; --blue:#2563eb; --blue-soft:#e8f0ff;
+  --green:#15803d; --green-soft:#e7f7ec; --red:#c2410c; --red-soft:#fdeee6;
+  --purple:#7c3aed; --purple-soft:#f1ebff; --code-bg:#0f172a; --code-ink:#e2e8f0;
+  --side:#111827; --side-ink:#cbd5e1; --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.06);
+}
+html[data-theme="dark"]{
+  --bg:#0b1020; --panel:#121a2e; --ink:#e6eaf2; --muted:#9aa5b8; --line:#243049;
+  --accent:#f59e0b; --accent-soft:#2a2112; --blue:#60a5fa; --blue-soft:#14223d;
+  --green:#4ade80; --green-soft:#10291a; --red:#fb923c; --red-soft:#2c1a10;
+  --purple:#a78bfa; --purple-soft:#1f1838; --code-bg:#070b16; --side:#070b16; --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--blue)}
+code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+:not(pre)>code{background:var(--blue-soft);color:var(--blue);padding:.1em .38em;border-radius:5px;font-size:.88em;word-break:break-word}
+
+/* layout */
+.side{position:fixed;inset:0 auto 0 0;width:280px;background:var(--side);color:var(--side-ink);overflow-y:auto;padding:22px 16px 40px;z-index:5}
+.side .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:1.05rem;margin:0 6px 4px}
+.side .brand span.logo{background:var(--accent);color:#111;border-radius:8px;padding:2px 8px;font-size:.85rem}
+.side .sub{font-size:.8rem;color:#8b96aa;margin:0 6px 18px}
+.side nav a{display:block;color:var(--side-ink);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.side nav a:hover{background:#1f2937;color:#fff}
+.side nav a.active{background:#1f2937;color:#fff;box-shadow:inset 3px 0 0 var(--accent)}
+.side nav .grp{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6b7690;margin:16px 10px 6px}
+.side .tools{margin:20px 6px 0;display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:.85rem;cursor:pointer}
+.side .btn{background:#1f2937;color:#e5e7eb;border-color:#374151}
+main{margin-left:280px;padding:40px clamp(18px,4vw,64px) 120px;max-width:1180px}
+.menu-btn{display:none}
+@media (max-width:900px){
+  .side{transform:translateX(-100%);transition:transform .2s}
+  body.nav-open .side{transform:none}
+  main{margin-left:0;padding-top:64px}
+  .menu-btn{display:block;position:fixed;top:12px;left:12px;z-index:6}
+}
+
+/* typography */
+h1{font-size:clamp(2rem,4vw,2.8rem);line-height:1.15;margin:0 0 10px}
+h2{font-size:1.65rem;margin:0 0 14px;padding-top:6px}
+h3{font-size:1.18rem;margin:28px 0 10px}
+h4{margin:20px 0 8px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:30px clamp(18px,3vw,36px);margin:0 0 28px;box-shadow:var(--shadow);scroll-margin-top:20px}
+.kicker{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.lead{font-size:1.1rem;color:var(--muted);max-width:760px}
+.muted{color:var(--muted)}
+
+/* hero */
+.hero{background:linear-gradient(135deg,#111827 0%,#1e293b 60%,#3b2a12 100%);color:#f8fafc;border:none}
+.hero .lead{color:#cbd5e1}
+.hero .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 12px;font-size:.85rem}
+.hero .note{margin-top:18px;font-size:.88rem;color:#94a3b8}
+
+/* tables */
+.tbl{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--bg);font-weight:650;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+.ok{color:var(--green);font-weight:700}.no{color:var(--red);font-weight:700}
+
+/* code */
+.code{position:relative;margin:14px 0}
+.code pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:12px;overflow-x:auto;font-size:.86rem;line-height:1.55;margin:0}
+.code .lang{position:absolute;top:8px;right:72px;font-size:.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
+.code .copy{position:absolute;top:6px;right:8px;font-size:.75rem;padding:3px 9px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;cursor:pointer}
+.c-k{color:#7dd3fc}.c-s{color:#fde68a}.c-c{color:#64748b;font-style:italic}.c-g{color:#86efac}.c-r{color:#fca5a5}
+
+/* callouts */
+.call{border-radius:12px;padding:14px 16px 14px 48px;margin:16px 0;position:relative;border:1px solid transparent}
+.call::before{position:absolute;left:16px;top:13px;font-size:1.1rem}
+.call.tip{background:var(--blue-soft);border-color:color-mix(in srgb,var(--blue) 25%,transparent)}.call.tip::before{content:"💡"}
+.call.warn{background:var(--red-soft);border-color:color-mix(in srgb,var(--red) 25%,transparent)}.call.warn::before{content:"⚠️"}
+.call.prod{background:var(--green-soft);border-color:color-mix(in srgb,var(--green) 25%,transparent)}.call.prod::before{content:"🏢"}
+.call.int{background:var(--purple-soft);border-color:color-mix(in srgb,var(--purple) 25%,transparent)}.call.int::before{content:"🎯"}
+.call.lesson{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}.call.lesson::before{content:"🧠"}
+.call b:first-child{display:block;margin-bottom:2px}
+.call p{margin:.3em 0}
+
+/* cards */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:16px 0}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+.card .ico{font-size:1.5rem}
+.card h4{margin:6px 0 4px}
+.card p{margin:0;color:var(--muted);font-size:.93rem}
+
+/* lab */
+.lab{border:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);border-radius:14px;padding:6px 20px 14px;margin:22px 0;background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.lab>.tag{display:inline-block;background:var(--accent);color:#111;font-weight:700;font-size:.75rem;padding:3px 10px;border-radius:999px;margin-top:12px;letter-spacing:.05em}
+ol.steps{counter-reset:s;list-style:none;padding-left:0}
+ol.steps>li{counter-increment:s;position:relative;padding-left:40px;margin:12px 0}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--panel);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+
+/* diagrams */
+figure{margin:20px 0}
+figure svg{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+figcaption{font-size:.85rem;color:var(--muted);text-align:center;margin-top:6px}
+svg text{font-family:system-ui,sans-serif;fill:var(--ink)}
+svg .box{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+svg .b-blue{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1.5}
+svg .b-green{fill:var(--green-soft);stroke:var(--green);stroke-width:1.5}
+svg .b-red{fill:var(--red-soft);stroke:var(--red);stroke-width:1.5}
+svg .b-acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .b-pur{fill:var(--purple-soft);stroke:var(--purple);stroke-width:1.5}
+svg .ln{stroke:var(--muted);stroke-width:1.6;fill:none}
+svg .ln-g{stroke:var(--green);stroke-width:1.8;fill:none}
+svg .ln-r{stroke:var(--red);stroke-width:1.8;fill:none}
+svg .sm{font-size:12px;fill:var(--muted)}
+svg .t-b{font-weight:700}
+svg .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+
+/* arn */
+.arn{display:flex;flex-wrap:wrap;gap:2px;font-family:ui-monospace,Menlo,monospace;font-size:.95rem;margin:16px 0}
+.arn span{padding:8px 8px 22px;border-radius:8px;position:relative;background:var(--bg);border:1px solid var(--line)}
+.arn span i{position:absolute;left:8px;bottom:3px;font-style:normal;font-family:system-ui;font-size:.68rem;color:var(--muted);white-space:nowrap}
+.arn .sep{background:none;border:none;padding:8px 0 22px}
+
+/* details */
+details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;background:var(--bg)}
+details summary{cursor:pointer;font-weight:600}
+details[open] summary{margin-bottom:8px}
+
+.check li{list-style:none;margin:6px 0}
+.check{padding-left:4px}
+.toc-num{color:var(--accent);font-weight:700;margin-right:6px}
+footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
+@media print{.side,.menu-btn,.copy{display:none}main{margin:0}section{break-inside:avoid-page}}
+</style>
+</head>
+<body>
+<button class="btn menu-btn" onclick="document.body.classList.toggle('nav-open')">☰ Menu</button>
+
+<aside class="side">
+  <div class="brand"><span class="logo">AWS</span> Notes</div>
+  <div class="sub">01 · Identity &amp; Access Management</div>
+  <nav id="toc">
+    <div class="grp">Foundations</div>
+    <a href="#what"><span class="toc-num">1</span>What IAM is</a>
+    <a href="#blocks"><span class="toc-num">2</span>Building blocks</a>
+    <a href="#secure"><span class="toc-num">3</span>Lab · Secure the account</a>
+    <div class="grp">Policies</div>
+    <a href="#policies"><span class="toc-num">4</span>Policy JSON &amp; ARNs</a>
+    <a href="#eval"><span class="toc-num">5</span>How AWS decides</a>
+    <a href="#lab-policy"><span class="toc-num">6</span>Lab · Least privilege &amp; Deny</a>
+    <div class="grp">Roles</div>
+    <a href="#roles"><span class="toc-num">7</span>Roles explained</a>
+    <a href="#lab-ec2"><span class="toc-num">8</span>Lab · EC2 role (no keys)</a>
+    <a href="#lab-switch"><span class="toc-num">9</span>Lab · Switch role</a>
+    <a href="#lab-oidc"><span class="toc-num">10</span>Lab · GitHub OIDC</a>
+    <a href="#keys"><span class="toc-num">11</span>Keys vs OIDC &amp; leaks</a>
+    <div class="grp">Operate</div>
+    <a href="#audit"><span class="toc-num">12</span>CloudTrail &amp; auditing</a>
+    <a href="#advanced"><span class="toc-num">13</span>Conditions, boundaries, SSO, SCPs</a>
+    <a href="#prod"><span class="toc-num">14</span>Production checklist</a>
+    <a href="#mistakes"><span class="toc-num">15</span>Common mistakes</a>
+    <a href="#interview"><span class="toc-num">16</span>Interview Q&amp;A</a>
+    <a href="#cheat"><span class="toc-num">17</span>Cheat sheet &amp; glossary</a>
+  </nav>
+  <div class="tools">
+    <button class="btn" id="theme">🌓 Theme</button>
+    <button class="btn" onclick="window.print()">🖨 Print</button>
+  </div>
+</aside>
+
+<main>
+
+<section class="hero">
+  <span class="kicker">AWS Notes · Chapter 1</span>
+  <h1>IAM: Identity &amp; Access Management</h1>
+  <p class="lead">Everything from my IAM study session: the concepts, every hands-on lab with real outputs, the mistakes I made and how I fixed them, and how it's all used in production.</p>
+  <div class="pills">
+    <span class="pill">👤 Users · Groups</span><span class="pill">📜 Policies</span><span class="pill">🚫 Implicit vs explicit deny</span>
+    <span class="pill">🎩 Roles · STS</span><span class="pill">🖥 EC2 instance role</span><span class="pill">🔁 Switch role</span>
+    <span class="pill">🐙 GitHub OIDC</span><span class="pill">🔑 Key leak response</span><span class="pill">🕵️ CloudTrail</span>
+  </div>
+  <p class="note">Account ID shown as <code>123456789012</code> and GitHub user as <code>YOUR_GH_USER</code>. Replace them with your own. Region used: Frankfurt <code>eu-central-1</code>.</p>
+</section>
+
+<!-- 1 -->
+<section id="what">
+  <span class="kicker">Section 1</span>
+  <h2>What IAM is</h2>
+  <p>IAM is the <b>security desk</b> of an AWS account. Every request to AWS, whether a console click, a CLI command or an app's SDK call, passes two checks:</p>
+  <div class="grid">
+    <div class="card"><div class="ico">🪪</div><h4>1 · Authentication</h4><p><b>Who are you?</b> Password + MFA, an access key, or temporary credentials from a role.</p></div>
+    <div class="card"><div class="ico">✅</div><h4>2 · Authorization</h4><p><b>Are you allowed to do this?</b> IAM evaluates every policy that applies and answers allow or deny.</p></div>
+    <div class="card"><div class="ico">🌍</div><h4>Global &amp; free</h4><p>IAM isn't tied to a region and costs nothing. One set of users and roles covers the whole account.</p></div>
+  </div>
+  <div class="call lesson"><b>The one sentence to remember</b>
+    <p><b>Who</b> (principal) can do <b>what</b> (action) on <b>which thing</b> (resource) under <b>which conditions</b>.</p></div>
+  <h3>The office-building analogy</h3>
+  <div class="tbl"><table>
+    <tr><th>AWS thing</th><th>Building analogy</th></tr>
+    <tr><td>AWS account</td><td>The office building</td></tr>
+    <tr><td>Root user</td><td>The owner, with a master key to every door, the safe and the bank account. Can't be restricted.</td></tr>
+    <tr><td>IAM</td><td>The security desk deciding who gets in and which doors open</td></tr>
+    <tr><td>IAM user</td><td>An employee with their own ID card</td></tr>
+    <tr><td>IAM group</td><td>A team. Permissions given to the team apply to everyone in it.</td></tr>
+    <tr><td>Policy</td><td>A permission slip ("may open these doors")</td></tr>
+    <tr><td>IAM role</td><td>A <b>hat / visitor badge</b> someone borrows for a while; it has its own powers</td></tr>
+  </table></div>
+</section>
+
+<!-- 2 -->
+<section id="blocks">
+  <span class="kicker">Section 2</span>
+  <h2>The building blocks</h2>
+  <div class="tbl"><table>
+    <tr><th>Thing</th><th>What it is</th><th>Used in production?</th></tr>
+    <tr><td><b>Root user</b></td><td>The sign-up email. Can do <i>everything</i>; IAM policies can't restrict it.</td><td>Lock it away with MFA. Never use it day to day.</td></tr>
+    <tr><td><b>IAM user</b></td><td>A long-lived identity with a password and/or access keys (<code>AKIA…</code>).</td><td>Less and less. Humans use IAM Identity Center (SSO) instead.</td></tr>
+    <tr><td><b>IAM group</b></td><td>A collection of users that share policies. Not an identity: you can't log in as a group.</td><td>Yes, wherever IAM users exist.</td></tr>
+    <tr><td><b>IAM role</b></td><td>An identity with <b>no permanent credentials</b>. Someone or something <i>assumes</i> it and gets temporary keys (<code>ASIA…</code>).</td><td><b>The most important thing in production.</b> Used by EC2, Lambda, CI/CD, SSO and cross-account access.</td></tr>
+    <tr><td><b>Policy</b></td><td>A JSON document listing permissions.</td><td>Everywhere.</td></tr>
+    <tr><td><b>STS</b></td><td>Security Token Service: hands out temporary credentials when a role is assumed.</td><td>Behind every role.</td></tr>
+  </table></div>
+  <div class="call prod"><b>Rule of thumb</b><p>Humans log in through SSO, then use roles. Machines use roles. Avoid long-lived access keys.</p></div>
+</section>
+
+<!-- 3 -->
+<section id="secure">
+  <span class="kicker">Section 3 · Lab</span>
+  <h2>Lab: Secure a brand-new account</h2>
+  <p>This is the first thing every company does with a new AWS account, and it's what I did first.</p>
+
+  <div class="lab"><span class="tag">LAB 1 · CONSOLE</span>
+    <h4>A. Put MFA on the root user</h4>
+    <ol class="steps">
+      <li>Install Google or Microsoft Authenticator on your phone.</li>
+      <li>Account name (top right) → <b>Security credentials</b> → <b>Assign MFA device</b> → name <code>root-phone</code> → <b>Authenticator app</b>.</li>
+      <li>Scan the QR code, then enter <b>two consecutive codes</b> → <b>Add MFA</b>.</li>
+    </ol>
+    <h4>B. Create your own admin user (via a group)</h4>
+    <ol class="steps">
+      <li><b>IAM → Users → Create user</b> → name <code>my-admin</code> → tick <b>Provide console access</b> → <b>I want to create an IAM user</b> → custom password.</li>
+      <li><b>Add user to group → Create group</b> <code>Admins</code> → tick <b>AdministratorAccess</b>. Several policies match the search; pick the plain one, type <i>AWS managed – job function</i>.</li>
+      <li>Leave <b>permissions boundary</b> off → <b>Create user</b>.</li>
+      <li>Save the <b>sign-in URL</b>: <code>https://123456789012.signin.aws.amazon.com/console</code></li>
+    </ol>
+    <h4>C. Let IAM users see billing</h4>
+    <ol class="steps">
+      <li>As root: account name → <b>Account</b> → <b>IAM user and role access to Billing information</b> → Edit → <b>Activate IAM Access</b>.</li>
+    </ol>
+    <h4>D. Switch to the admin user</h4>
+    <ol class="steps">
+      <li>Sign out of root, log in at the sign-in URL as <code>my-admin</code>.</li>
+      <li>IAM → Users → <code>my-admin</code> → Security credentials → add MFA (<code>my-admin-phone</code>).</li>
+      <li>Pick <b>one region</b> and stick with it (Frankfurt, <code>eu-central-1</code>). Use <b>EC2 Global View</b> to spot forgotten resources in any region.</li>
+    </ol>
+  </div>
+
+  <h3>What the user page shows</h3>
+  <div class="tbl"><table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>arn:aws:iam::123456789012:user/my-admin</code></td><td>The user's unique ID: service <code>iam</code>, account, type <code>user</code>, name</td></tr>
+    <tr><td>Attached via: <b>Group Admins</b></td><td>Permissions come from the group, not attached directly. This is the correct pattern.</td></tr>
+    <tr><td>Console access: Enabled · Access key: –</td><td>Can log in, but has no command-line keys. Good: don't create keys you don't need.</td></tr>
+    <tr><td>Used as: <b>Permissions policy</b></td><td>On the policy page: shows the policy is attached somewhere</td></tr>
+  </table></div>
+  <div class="call tip"><b>Free plan notes (my account)</b><p>A free-plan account can't be charged: costs come out of credits, and access ends when the credits or the time period run out. Do the hands-on labs before then.</p></div>
+</section>
+
+<!-- 4 -->
+<section id="policies">
+  <span class="kicker">Section 4</span>
+  <h2>Policies: reading the JSON</h2>
+  <p>A policy is a short JSON document. The AWS managed policy <code>AdministratorAccess</code> is the simplest one there is:</p>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Action"</span>: <span class="c-s">"*"</span>,
+      <span class="c-k">"Resource"</span>: <span class="c-s">"*"</span>
+    }
+  ]
+}</pre></div>
+  <p>It reads: <b>allow every action on every resource.</b> Compare it with <code>AmazonS3ReadOnlyAccess</code>:</p>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Action"</span>: [<span class="c-s">"s3:Get*"</span>, <span class="c-s">"s3:List*"</span>, <span class="c-s">"s3:Describe*"</span>],
+      <span class="c-k">"Resource"</span>: <span class="c-s">"*"</span>
+    }
+  ]
+}</pre></div>
+
+  <h3>Every field</h3>
+  <div class="tbl"><table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>Version</code></td><td>Always <code>2012-10-17</code>. It's the policy-language version, not a date you change.</td></tr>
+    <tr><td><code>Statement</code></td><td>The list of rules</td></tr>
+    <tr><td><code>Sid</code></td><td>Optional label for humans, e.g. <code>"UploadOnlyToLabBucket"</code>. Changes nothing.</td></tr>
+    <tr><td><code>Effect</code></td><td><code>Allow</code> or <code>Deny</code></td></tr>
+    <tr><td><code>Action</code></td><td>API calls, written <code>service:Action</code>. Wildcards work: <code>s3:Get*</code> = every action starting with Get.</td></tr>
+    <tr><td><code>Resource</code></td><td>ARNs of the things the rule applies to. <code>*</code> = everything.</td></tr>
+    <tr><td><code>Condition</code></td><td>Optional "…but only if…" rules: MFA, IP, region, tags, repo/branch…</td></tr>
+    <tr><td><code>Principal</code></td><td><b>Only</b> in resource-based policies (bucket policies, role trust policies): <i>who</i> is allowed</td></tr>
+  </table></div>
+
+  <h3>Why does a managed policy use <code>"Resource": "*"</code>?</h3>
+  <ul>
+    <li>AWS writes managed policies once for millions of customers, so it can't know your bucket names.</li>
+    <li><code>*</code> only covers what you can reach anyway: your own account's buckets. Other people's buckets stay blocked unless <i>their</i> bucket policy lets you in.</li>
+    <li>Some actions only work with <code>*</code>, e.g. <code>s3:ListAllMyBuckets</code> isn't about one bucket.</li>
+    <li>In production you write your <b>own</b> policy naming the exact bucket. That's <b>least privilege</b>.</li>
+  </ul>
+
+  <h3>ARN anatomy</h3>
+  <p>An ARN (Amazon Resource Name) is the unique address of anything in AWS.</p>
+  <div class="arn">
+    <span>arn<i>always</i></span><span class="sep">:</span>
+    <span>aws<i>partition</i></span><span class="sep">:</span>
+    <span>s3<i>service</i></span><span class="sep">:</span>
+    <span>&nbsp;<i>region (empty)</i></span><span class="sep">:</span>
+    <span>&nbsp;<i>account (empty)</i></span><span class="sep">:</span>
+    <span>iam-lab-123456789012<i>bucket</i></span>
+    <span>/*<i>every file inside</i></span>
+  </div>
+  <div class="arn">
+    <span>arn</span><span class="sep">:</span><span>aws</span><span class="sep">:</span><span>iam<i>service</i></span><span class="sep">:</span><span>&nbsp;<i>region (IAM is global)</i></span><span class="sep">:</span><span>123456789012<i>account</i></span><span class="sep">:</span><span>role/lab-ec2-s3-reader<i>type/name</i></span>
+  </div>
+  <div class="call warn"><b>The #1 S3 policy mistake</b>
+    <p>Listing files is an action on the <b>bucket</b>: <code>arn:aws:s3:::my-bucket</code> (no <code>/*</code>).</p>
+    <p>Reading or uploading files is an action on the <b>files</b>: <code>arn:aws:s3:::my-bucket/*</code>.</p>
+    <p><code>my-bucket:*</code> (colon instead of slash) matches nothing.</p></div>
+
+  <h3>Policy types</h3>
+  <div class="tbl"><table>
+    <tr><th>Type</th><th>Attached to</th><th>Grants?</th><th>Example</th></tr>
+    <tr><td><b>AWS managed</b></td><td>User / group / role</td><td>Yes</td><td><code>AmazonS3ReadOnlyAccess</code>. Written by AWS; you can't edit it.</td></tr>
+    <tr><td><b>Customer managed</b></td><td>User / group / role</td><td>Yes</td><td><code>lab-upload-iam-lab-bucket</code>. Your own, reusable. <b>The production default.</b></td></tr>
+    <tr><td><b>Inline</b></td><td>One identity only</td><td>Yes</td><td><code>deny-delete-lab-files</code>. One-off rules, deleted together with the identity.</td></tr>
+    <tr><td><b>Resource-based</b></td><td>The resource</td><td>Yes</td><td>S3 bucket policy, KMS key policy, a <b>role's trust policy</b></td></tr>
+    <tr><td><b>Permission boundary</b></td><td>User / role</td><td><b>No</b>, it only caps</td><td>"Roles created by developers can never touch IAM"</td></tr>
+    <tr><td><b>SCP / RCP</b></td><td>Accounts (Organizations)</td><td><b>No</b>, it only caps</td><td>"Nobody may use regions outside the EU"</td></tr>
+    <tr><td><b>Session policy</b></td><td>One role session</td><td><b>No</b>, it only narrows</td><td>Passed in when assuming a role</td></tr>
+  </table></div>
+  <p class="muted">Labels you'll see in the console: <b>AWS managed – job function</b> (made for a typical job role), <b>Used as: None / Permissions policy</b> (whether it's attached anywhere), <b>IAMUserChangePassword</b> (added automatically when "must create new password" is ticked).</p>
+</section>
+
+<!-- 5 -->
+<section id="eval">
+  <span class="kicker">Section 5</span>
+  <h2>How AWS decides: the evaluation logic</h2>
+  <figure>
+    <svg viewBox="0 0 760 300" role="img" aria-label="Policy evaluation flow">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8892a6"/></marker></defs>
+      <rect class="b-blue" x="20" y="120" width="130" height="56" rx="10"/><text x="85" y="145" text-anchor="middle" class="t-b">API request</text><text x="85" y="163" text-anchor="middle" class="sm">default: denied</text>
+      <path class="ln" d="M150 148H205" marker-end="url(#ar)"/>
+      <rect class="b-acc" x="210" y="110" width="170" height="76" rx="10"/><text x="295" y="140" text-anchor="middle" class="t-b">1 · Explicit Deny</text><text x="295" y="158" text-anchor="middle" class="sm">in ANY policy matches?</text>
+      <path class="ln-r" d="M295 110V60H545" marker-end="url(#ar)"/><text x="410" y="52" class="sm">yes</text>
+      <rect class="b-red" x="550" y="28" width="190" height="62" rx="10"/><text x="645" y="54" text-anchor="middle" class="t-b">DENIED</text><text x="645" y="72" text-anchor="middle" class="sm">"with an explicit deny"</text>
+      <path class="ln" d="M380 148H425" marker-end="url(#ar)"/><text x="392" y="140" class="sm">no</text>
+      <rect class="b-acc" x="430" y="110" width="170" height="76" rx="10"/><text x="515" y="137" text-anchor="middle" class="t-b">2 · An Allow</text><text x="515" y="154" text-anchor="middle" class="sm">matches (and SCP/boundary</text><text x="515" y="169" text-anchor="middle" class="sm">also allow)?</text>
+      <path class="ln-g" d="M600 148H640V148" /><path class="ln-g" d="M600 148H645" marker-end="url(#ar)"/><text x="610" y="140" class="sm">yes</text>
+      <rect class="b-green" x="650" y="120" width="90" height="56" rx="10"/><text x="695" y="153" text-anchor="middle" class="t-b">ALLOWED</text>
+      <path class="ln-r" d="M515 186V235H545" marker-end="url(#ar)"/><text x="525" y="215" class="sm">no</text>
+      <rect class="b-red" x="550" y="208" width="190" height="62" rx="10"/><text x="645" y="234" text-anchor="middle" class="t-b">DENIED (implicit)</text><text x="645" y="252" text-anchor="middle" class="sm">"no policy allows"</text>
+    </svg>
+    <figcaption>Deny beats Allow, and Allow beats the default deny.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <tr><th>Rule</th><th>Meaning</th><th>Seen in lab</th></tr>
+    <tr><td>Default = <b>implicit deny</b></td><td>Anything not explicitly allowed is blocked</td><td>Tests 3–6, 8, 9</td></tr>
+    <tr><td><b>Explicit Deny always wins</b></td><td>Even over <code>AdministratorAccess</code> or <code>S3FullAccess</code></td><td>Test 12</td></tr>
+    <tr><td>Allows from all policies <b>add up</b></td><td>ReadOnly + Upload policy = read everything + upload to one bucket</td><td>Test 7</td></tr>
+    <tr><td>A Deny is only as wide as its Action + Resource</td><td>Deny on bucket A doesn't affect bucket B</td><td>Test 11</td></tr>
+    <tr><td>Cross-account needs <b>both sides</b></td><td>Source identity allows it <b>and</b> the target resource or role trusts it</td><td>Switch-role lab</td></tr>
+  </table></div>
+
+  <h3>Reading AccessDenied errors (a real job skill)</h3>
+<div class="code"><span class="lang">error</span><pre>User: arn:aws:iam::123456789012:user/test-viewer is not authorized to perform:
+<span class="c-r">ec2:DescribeInstances</span> because <span class="c-s">no identity-based policy allows</span> the ec2:DescribeInstances action
+(Service: Ec2, Status Code: 403)</pre></div>
+  <div class="tbl"><table>
+    <tr><th>Part</th><th>Tells you</th></tr>
+    <tr><td><code>User: arn:…/test-viewer</code></td><td><b>Who</b> tried</td></tr>
+    <tr><td><code>ec2:DescribeInstances</code></td><td><b>Exactly which action</b> is missing</td></tr>
+    <tr><td><code>no identity-based policy allows</code></td><td><b>Implicit deny</b> → fix it by <b>adding</b> exactly that action</td></tr>
+    <tr><td><code>with an explicit deny in …</code></td><td><b>A Deny matched</b> → adding permissions won't help; find and change that Deny (or the SCP)</td></tr>
+    <tr><td><code>Status Code: 403</code></td><td>The standard "forbidden" code</td></tr>
+  </table></div>
+  <div class="call tip"><b>The S3 console hides details</b><p>It only says "Access denied". The CLI, CloudTrail or the Policy Simulator show the full reason.</p></div>
+</section>
+
+<!-- 6 -->
+<section id="lab-policy">
+  <span class="kicker">Section 6 · Lab</span>
+  <h2>Lab: Least privilege, implicit deny &amp; explicit Deny</h2>
+  <p>Goal: a test user <code>test-viewer</code> who can only <i>look</i> at S3, then exactly one extra permission, then a Deny that beats full access.</p>
+
+  <div class="lab"><span class="tag">LAB 2 · CONSOLE</span>
+    <h4>Setup</h4>
+    <ol class="steps">
+      <li>As <code>my-admin</code>: S3 → create bucket <code>iam-lab-123456789012</code> (Frankfurt, defaults, "Block all public access" ON) and upload a small file. Bucket names are global, so add your account ID to make them unique.</li>
+      <li>IAM → create user <code>test-viewer</code> (console access) → <b>Attach policies directly</b> → <code>AmazonS3ReadOnlyAccess</code>.</li>
+      <li>Open an <b>incognito window</b> and log in as <code>test-viewer</code>, so you stay logged in as admin in the normal window.</li>
+    </ol>
+    <h4>Round 1: read-only</h4>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
+      <tr><td>1</td><td>S3 → see and open the bucket</td><td class="ok">✅</td><td><code>s3:List*</code> covers ListAllMyBuckets + ListBucket</td></tr>
+      <tr><td>2</td><td>Download a file</td><td class="ok">✅</td><td><code>s3:Get*</code> covers GetObject</td></tr>
+      <tr><td>3</td><td>Upload</td><td class="no">❌</td><td><code>s3:PutObject</code> not allowed → implicit deny</td></tr>
+      <tr><td>4</td><td>Delete</td><td class="no">❌</td><td><code>s3:DeleteObject</code> not allowed</td></tr>
+      <tr><td>5</td><td>EC2 → Instances</td><td class="no">❌</td><td>Nothing allows <code>ec2:*</code></td></tr>
+      <tr><td>6</td><td>IAM → Users</td><td class="no">❌</td><td>Nothing allows <code>iam:*</code></td></tr>
+    </table></div>
+
+    <h4>Round 2: write your own least-privilege policy</h4>
+    <p>Create a second bucket <code>iam-lab-2-123456789012</code>, then IAM → Policies → Create policy → JSON:</p>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Sid"</span>: <span class="c-s">"UploadOnlyToLabBucket"</span>,
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Action"</span>: <span class="c-s">"s3:PutObject"</span>,
+      <span class="c-k">"Resource"</span>: <span class="c-s">"arn:aws:s3:::iam-lab-123456789012/*"</span>
+    }
+  ]
+}</pre></div>
+    <p>Name it <code>lab-upload-iam-lab-bucket</code> → attach it to <code>test-viewer</code>.</p>
+    <div class="call warn"><b>My first attempt had 3 bugs</b>
+      <p><code>"s3:PutObjec"</code>: a typo matches nothing. The console editor flags it; Terraform may not.</p>
+      <p><code>iam-lab-2-…</code>: the wrong bucket.</p>
+      <p><code>…:*</code> instead of <code>…/*</code>: the wrong separator, which matches nothing.</p></div>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
+      <tr><td>7</td><td>Upload to <code>iam-lab</code></td><td class="ok">✅</td><td>My policy allows PutObject there</td></tr>
+      <tr><td>8</td><td>Upload to <code>iam-lab-2</code></td><td class="no">❌</td><td>Not in my <code>Resource</code></td></tr>
+      <tr><td>9</td><td>Delete</td><td class="no">❌</td><td>Still not allowed anywhere</td></tr>
+    </table></div>
+
+    <h4>Round 3: explicit Deny beats full access</h4>
+    <p>Attach <code>AmazonS3FullAccess</code> to <code>test-viewer</code>, then add an <b>inline</b> policy <code>deny-delete-lab-files</code>:</p>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Sid"</span>: <span class="c-s">"NeverDeleteLabFiles"</span>,
+      <span class="c-k">"Effect"</span>: <span class="c-r">"Deny"</span>,
+      <span class="c-k">"Action"</span>: <span class="c-s">"s3:DeleteObject"</span>,
+      <span class="c-k">"Resource"</span>: <span class="c-s">"arn:aws:s3:::iam-lab-123456789012/*"</span>
+    }
+  ]
+}</pre></div>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
+      <tr><td>10</td><td>Upload to <code>iam-lab-2</code></td><td class="ok">✅</td><td>FullAccess allows it</td></tr>
+      <tr><td>11</td><td>Delete in <code>iam-lab-2</code></td><td class="ok">✅</td><td>The Deny only covers <code>iam-lab</code>. <i>I guessed ❌ here; the bucket was also empty at first, so upload a file before testing a delete.</i></td></tr>
+      <tr><td>12</td><td>Delete in <code>iam-lab</code></td><td class="no">❌</td><td><b>Explicit Deny wins</b> over FullAccess</td></tr>
+    </table></div>
+  </div>
+
+  <h3>Policy Simulator: test without logging in</h3>
+  <ol class="steps">
+    <li>IAM → Users → <code>test-viewer</code> → Permissions → <b>Simulate</b>. A new simulator opens; the legacy one is still linked at the top.</li>
+    <li><b>Add actions</b> → S3 → <code>DeleteObject</code> → resource <code>arn:aws:s3:::iam-lab-123456789012/my-file.docx</code> → <b>Simulate</b>.</li>
+    <li>Result: <b>Denied</b> · "Explicit deny found in 1 or more statements". Try the <code>-2</code> bucket: <b>Allowed</b>.</li>
+  </ol>
+  <div class="call prod"><b>In companies</b><p>Engineers run new policies through the simulator (or <code>aws iam simulate-principal-policy</code>) before attaching them to production roles.</p></div>
+</section>
+
+<!-- 7 -->
+<section id="roles">
+  <span class="kicker">Section 7</span>
+  <h2>Roles explained</h2>
+  <p><b>A user is who you are</b> (a permanent ID card). <b>A role is a hat you put on for a while</b>, with its own powers.</p>
+  <div class="grid">
+    <div class="card"><div class="ico">🎩</div><h4>Rule 1</h4><p>While wearing the hat you have <b>only the hat's permissions</b>. Yours, including your Denys, are set aside.</p></div>
+    <div class="card"><div class="ico">↩️</div><h4>Rule 2</h4><p>Take it off ("Switch back", or the session expires) and you're back to your own permissions.</p></div>
+    <div class="card"><div class="ico">🔐</div><h4>Rule 3</h4><p>Not everyone may wear it: the role's <b>trust policy</b> must allow you (and for accounts, your own policy too).</p></div>
+    <div class="card"><div class="ico">⏳</div><h4>Rule 4</h4><p>You get <b>temporary keys</b> from STS (<code>ASIA…</code>) that expire: 1 h by default for people, a few hours for EC2, auto-renewed for services.</p></div>
+  </div>
+
+  <h3>Every role has two policies</h3>
+  <figure>
+    <svg viewBox="0 0 760 210" role="img" aria-label="Trust policy plus permissions policy">
+      <rect class="b-pur" x="20" y="30" width="300" height="150" rx="12"/>
+      <text x="170" y="62" text-anchor="middle" class="t-b">Trust policy</text>
+      <text x="170" y="84" text-anchor="middle" class="sm">WHO may wear the hat?</text>
+      <text x="170" y="118" text-anchor="middle" class="mono">"Principal": {</text>
+      <text x="170" y="136" text-anchor="middle" class="mono">"Service": "ec2.amazonaws.com" }</text>
+      <text x="170" y="160" text-anchor="middle" class="mono">"Action": "sts:AssumeRole"</text>
+      <text x="380" y="112" text-anchor="middle" style="font-size:30px;font-weight:700">+</text>
+      <rect class="b-green" x="440" y="30" width="300" height="150" rx="12"/>
+      <text x="590" y="62" text-anchor="middle" class="t-b">Permissions policy</text>
+      <text x="590" y="84" text-anchor="middle" class="sm">WHAT can the wearer do?</text>
+      <text x="590" y="122" text-anchor="middle" class="mono">s3:ListBucket  → bucket</text>
+      <text x="590" y="142" text-anchor="middle" class="mono">s3:GetObject   → bucket/*</text>
+    </svg>
+    <figcaption>Both must allow it. Trust without permissions does nothing; permissions without trust can't be used.</figcaption>
+  </figure>
+
+  <h3>Who can be trusted</h3>
+  <div class="tbl"><table>
+    <tr><th>Trusted entity</th><th>Principal</th><th>The "other side"</th><th>Real use</th></tr>
+    <tr><td><b>AWS service</b></td><td><code>"Service": "ec2.amazonaws.com"</code></td><td>Whoever attaches the role needs <code>iam:PassRole</code></td><td>EC2, Lambda (<code>lambda.amazonaws.com</code>), ECS (<code>ecs-tasks…</code>)</td></tr>
+    <tr><td><b>AWS account</b></td><td><code>"AWS": "arn:aws:iam::ACCOUNT:root"</code></td><td>That account's policies must grant <code>sts:AssumeRole</code></td><td>Elevated access, on-call, cross-account</td></tr>
+    <tr><td><b>Specific user/role</b></td><td><code>"AWS": "arn:aws:iam::ACCOUNT:role/ci-deployer"</code></td><td>Only that exact identity</td><td>One fixed machine identity</td></tr>
+    <tr><td><b>Web identity (OIDC)</b></td><td><code>"Federated": "…oidc-provider/…"</code></td><td>The outside system's signed token + conditions</td><td>GitHub Actions, EKS pods</td></tr>
+    <tr><td><b>SAML / SSO</b></td><td>Company identity provider</td><td>Okta / Entra / Google login</td><td>Employees via Identity Center</td></tr>
+  </table></div>
+  <div class="call warn"><b><code>:root</code> does NOT mean the root user</b><p><code>arn:aws:iam::123456789012:root</code> in a trust policy means <i>"this whole account; its own IAM policies decide which users may assume me"</i>.</p></div>
+
+  <h3>ID prefixes worth recognizing</h3>
+  <div class="tbl"><table>
+    <tr><th>Prefix</th><th>What it is</th></tr>
+    <tr><td><code>AKIA…</code></td><td>Long-term access key (IAM user). Never expires.</td></tr>
+    <tr><td><code>ASIA…</code></td><td>Temporary access key from STS (a role session). Needs a session token and expires.</td></tr>
+    <tr><td><code>AIDA…</code></td><td>Unique ID of an IAM <b>user</b></td></tr>
+    <tr><td><code>AROA…</code></td><td>Unique ID of an IAM <b>role</b></td></tr>
+  </table></div>
+</section>
+
+<!-- 8 -->
+<section id="lab-ec2">
+  <span class="kicker">Section 8 · Lab</span>
+  <h2>Lab: An EC2 server reads S3 with no keys</h2>
+  <p><b>The problem:</b> an app on a server needs S3. Pasting access keys into code risks leaks (GitHub, screenshots, ex-employees), the keys never expire, and nobody rotates them. <b>The solution:</b> attach a role to the server.</p>
+
+  <figure>
+    <svg viewBox="0 0 760 250" role="img" aria-label="EC2 instance role credential flow">
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8892a6"/></marker></defs>
+      <rect class="b-acc" x="20" y="30" width="170" height="70" rx="10"/><text x="105" y="58" text-anchor="middle" class="t-b">EC2 service</text><text x="105" y="77" text-anchor="middle" class="sm">trusted by the role</text>
+      <path class="ln" d="M190 65H275" marker-end="url(#ar2)"/><text x="232" y="57" text-anchor="middle" class="sm">AssumeRole</text>
+      <rect class="b-pur" x="280" y="30" width="170" height="70" rx="10"/><text x="365" y="58" text-anchor="middle" class="t-b">STS</text><text x="365" y="77" text-anchor="middle" class="sm">issues ASIA keys (~6 h)</text>
+      <path class="ln" d="M450 65H535" marker-end="url(#ar2)"/>
+      <rect class="b-blue" x="540" y="30" width="200" height="70" rx="10"/><text x="640" y="56" text-anchor="middle" class="t-b">Metadata service</text><text x="640" y="76" text-anchor="middle" class="mono">169.254.169.254</text>
+      <rect class="box" x="300" y="150" width="440" height="80" rx="12"/>
+      <text x="520" y="174" text-anchor="middle" class="t-b">Your server (instance profile → role)</text>
+      <text x="520" y="196" text-anchor="middle" class="sm">CLI / SDK fetches keys from IMDS automatically</text>
+      <text x="520" y="214" text-anchor="middle" class="sm">nothing stored in code or ~/.aws</text>
+      <path class="ln" d="M640 100V145" marker-end="url(#ar2)"/>
+      <rect class="b-green" x="20" y="160" width="180" height="60" rx="10"/><text x="110" y="186" text-anchor="middle" class="t-b">S3 bucket</text><text x="110" y="204" text-anchor="middle" class="sm">allowed by role policy</text>
+      <path class="ln" d="M300 190H205" marker-end="url(#ar2)"/>
+      <path class="ln" d="M105 30V12H365V28" stroke-dasharray="5 4"/><text x="235" y="9" text-anchor="middle" class="sm">repeats before expiry → keys auto-rotate</text>
+    </svg>
+    <figcaption>The server keeps the role by getting a fresh short session again and again.</figcaption>
+  </figure>
+
+  <div class="lab"><span class="tag">LAB 3 · CONSOLE + SHELL</span>
+    <h4>A. A read-only policy for one bucket</h4>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Sid"</span>: <span class="c-s">"ListFilesInLabBucket"</span>,
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Action"</span>: <span class="c-s">"s3:ListBucket"</span>,
+      <span class="c-k">"Resource"</span>: <span class="c-s">"arn:aws:s3:::iam-lab-123456789012"</span>
+    },
+    {
+      <span class="c-k">"Sid"</span>: <span class="c-s">"ReadFilesInLabBucket"</span>,
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Action"</span>: <span class="c-s">"s3:GetObject"</span>,
+      <span class="c-k">"Resource"</span>: <span class="c-s">"arn:aws:s3:::iam-lab-123456789012/*"</span>
+    }
+  ]
+}</pre></div>
+    <p>Name: <code>lab-read-iam-lab-bucket</code>. It has two statements because listing acts on the bucket and reading acts on the files.</p>
+    <h4>B. The role</h4>
+    <ol class="steps">
+      <li>IAM → Roles → Create role → <b>AWS service</b> → <b>EC2</b>. This writes the trust policy for you.</li>
+      <li>Attach <code>lab-read-iam-lab-bucket</code> → name <code>lab-ec2-s3-reader</code>.</li>
+      <li>The <b>Trust relationships</b> tab shows <code>"Principal": {"Service": "ec2.amazonaws.com"}</code>, <code>"Action": "sts:AssumeRole"</code>.</li>
+    </ol>
+    <h4>C. Launch a server with the role</h4>
+    <ol class="steps">
+      <li>EC2 → Launch instance → <code>lab-role-test</code> · Amazon Linux 2023 · <code>t3.micro</code> · <b>Proceed without a key pair</b> · default network.</li>
+      <li><b>Advanced details → IAM instance profile → <code>lab-ec2-s3-reader</code></b>. This is the step that attaches the role.</li>
+      <li>Connect → <b>EC2 Instance Connect</b> (a browser terminal).</li>
+    </ol>
+    <h4>D. Tests and real output</h4>
+<div class="code"><span class="lang">bash</span><pre>$ aws sts get-caller-identity
+{
+  "UserId": "<span class="c-g">AROA</span>…:i-03721a8d173d8dd6c",
+  "Account": "123456789012",
+  "Arn": "arn:aws:<span class="c-g">sts</span>::123456789012:<span class="c-g">assumed-role/lab-ec2-s3-reader</span>/i-03721a8d173d8dd6c"
+}
+
+$ aws s3 ls s3://iam-lab-123456789012                  <span class="c-g"># ✅ ListBucket on bucket</span>
+$ aws s3 cp s3://iam-lab-123456789012/file.docx .      <span class="c-g"># ✅ GetObject on /*</span>
+$ aws s3 ls                                            <span class="c-r"># ❌ s3:ListAllMyBuckets not allowed</span>
+$ aws s3 ls s3://iam-lab-2-123456789012                <span class="c-r"># ❌ ListBucket only on bucket 1</span>
+$ aws s3 cp x.txt s3://iam-lab-123456789012/           <span class="c-r"># ❌ s3:PutObject not allowed</span>
+$ ls ~/.aws
+cli                                                    <span class="c-c"># just a cache, no credentials file</span></pre></div>
+    <div class="tbl"><table>
+      <tr><th>Output part</th><th>Meaning</th></tr>
+      <tr><td><code>sts … assumed-role/lab-ec2-s3-reader</code></td><td>The server is acting <b>as the role</b>, with an identity issued by STS</td></tr>
+      <tr><td><code>/i-03721a8d173d8dd6c</code></td><td>The session name = the instance ID, so you know which of 50 servers made a call</td></tr>
+      <tr><td><code>AROA…</code></td><td>A role (users are <code>AIDA…</code>)</td></tr>
+    </table></div>
+
+    <h4>E. See the temporary keys (IMDSv2)</h4>
+<div class="code"><span class="lang">bash</span><pre>TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/iam/security-credentials/lab-ec2-s3-reader \
+  | grep -E '"(Type|AccessKeyId|LastUpdated|Expiration)"'
+
+  "LastUpdated" : "2026-11-15T15:43:37Z",
+  "Type"        : "AWS-HMAC",
+  "AccessKeyId" : "<span class="c-g">ASIA</span>…",
+  "Expiration"  : "2026-11-15T22:17:54Z"      <span class="c-c"># ~6.5 h later, renewed automatically</span></pre></div>
+    <div class="call warn"><b>Never paste a SecretAccessKey or Token anywhere</b><p>The grep above deliberately hides them. Treat them like passwords.</p></div>
+    <div class="call prod"><b>Why IMDSv2 (the token step) exists</b><p>In 2019 Capital One was breached when an attacker tricked a web app (SSRF) into fetching these keys from 169.254.169.254. IMDSv2's PUT-token step blocks that trick. Companies <b>enforce IMDSv2</b> on every server, and Amazon Linux 2023 uses it by default.</p></div>
+
+    <h4>F. Change permissions live</h4>
+    <p>Attach <code>lab-upload-iam-lab-bucket</code> to the <b>role</b>, wait about 10 s, and re-run the upload → <span class="ok">✅</span>, with <b>no restart and no change on the server</b>. Edit the role once, and every server using it is updated.</p>
+    <h4>G. Clean up</h4>
+    <p>EC2 → instance → <b>Terminate</b>. Terminated instances stay listed for about an hour, then disappear, and cost nothing. <i>Stopped</i> is different: the server and its disk still exist.</p>
+  </div>
+
+  <h3>Questions I asked</h3>
+  <details><summary>Do I need to remember the temporary key?</summary><p>No, never. The CLI and every SDK (boto3, Node, Java…) fetch it from IMDS automatically and pick up new keys before expiry. Your code just calls <code>boto3.client("s3")</code>. To see the full key (for learning only), run the curl without <code>| grep</code>.</p></details>
+  <details><summary>When is that key useful?</summary><p>For you: almost never, apart from debugging which role a server uses. For an attacker: very useful, since the three values (AccessKeyId + Secret + Token) work from anywhere until they expire. That's why IMDSv2, least privilege, and alerts on role keys used from outside AWS exist.</p></details>
+  <details><summary>How does EC2 keep the role for days?</summary><p>It doesn't hold one long session. The EC2 service assumes the role, gets keys valid for about 6 h, places them in IMDS, and repeats before they expire, for as long as the role stays attached. The role's "Maximum session duration" (1–12 h) is for people and scripts calling AssumeRole.</p></details>
+  <details><summary>Instance profile vs role?</summary><p>EC2 can't hold a role directly. An <b>instance profile</b> is a small wrapper containing the role. The console creates one with the same name automatically when you make an "EC2" role; in Terraform or CloudFormation you create it yourself (<code>aws_iam_instance_profile</code>).</p></details>
+
+  <h3>iam:PassRole: who is allowed to attach a role</h3>
+  <figure>
+    <svg viewBox="0 0 760 170" role="img" aria-label="PassRole check">
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8892a6"/></marker></defs>
+      <rect class="b-blue" x="20" y="45" width="170" height="80" rx="10"/><text x="105" y="76" text-anchor="middle" class="t-b">You (my-admin)</text><text x="105" y="96" text-anchor="middle" class="sm">click "Launch instance"</text><text x="105" y="112" text-anchor="middle" class="sm">with role X</text>
+      <path class="ln" d="M190 85H255" marker-end="url(#ar3)"/>
+      <rect class="b-acc" x="260" y="30" width="220" height="110" rx="10"/><text x="370" y="56" text-anchor="middle" class="t-b">Check on YOU</text><text x="370" y="80" text-anchor="middle" class="mono">ec2:RunInstances ✔</text><text x="370" y="100" text-anchor="middle" class="mono">iam:PassRole on X ✔</text>
+      <path class="ln" d="M480 85H545" marker-end="url(#ar3)"/>
+      <rect class="b-pur" x="550" y="30" width="190" height="110" rx="10"/><text x="645" y="56" text-anchor="middle" class="t-b">Check on ROLE</text><text x="645" y="80" text-anchor="middle" class="sm">trust policy allows</text><text x="645" y="98" text-anchor="middle" class="mono">ec2.amazonaws.com ✔</text><text x="645" y="122" text-anchor="middle" class="sm">→ EC2 assumes it</text>
+    </svg>
+    <figcaption>EC2 doesn't need PassRole; the person attaching the role does. This prevents privilege escalation.</figcaption>
+  </figure>
+  <p>Without this check, a limited developer could launch a server with an <b>admin role</b>, log into it and use the admin keys. Companies restrict it like this:</p>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+  <span class="c-k">"Action"</span>: <span class="c-s">"iam:PassRole"</span>,
+  <span class="c-k">"Resource"</span>: <span class="c-s">"arn:aws:iam::123456789012:role/lab-ec2-s3-reader"</span>,
+  <span class="c-k">"Condition"</span>: {
+    <span class="c-k">"StringEquals"</span>: { <span class="c-k">"iam:PassedToService"</span>: <span class="c-s">"ec2.amazonaws.com"</span> }
+  }
+}</pre></div>
+  <p class="muted">Reads: "you may attach <b>only this role</b>, and <b>only to EC2</b>."</p>
+</section>
+
+<!-- 9 -->
+<section id="lab-switch">
+  <span class="kicker">Section 9 · Lab</span>
+  <h2>Lab: A person switching into a role</h2>
+  <p>In companies, an engineer's normal login is <b>read-only</b>. When they actually need to change something, they <b>switch into a more powerful role</b>, do the job, and switch back. Every switch is logged.</p>
+
+  <figure>
+    <svg viewBox="0 0 760 230" role="img" aria-label="Switch role handshake">
+      <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8892a6"/></marker></defs>
+      <rect class="b-blue" x="20" y="70" width="170" height="90" rx="10"/><text x="105" y="100" text-anchor="middle" class="t-b">test-viewer</text><text x="105" y="120" text-anchor="middle" class="sm">S3 read-only</text><text x="105" y="138" text-anchor="middle" class="sm">+ Deny delete</text>
+      <path class="ln" d="M190 115H285" marker-end="url(#ar4)"/><text x="237" y="106" text-anchor="middle" class="mono">AssumeRole</text>
+      <rect class="b-acc" x="290" y="20" width="200" height="80" rx="10"/><text x="390" y="46" text-anchor="middle" class="t-b">Side 1 · user policy</text><text x="390" y="66" text-anchor="middle" class="sm">sts:AssumeRole on</text><text x="390" y="83" text-anchor="middle" class="mono">role/lab-s3-elevated</text>
+      <rect class="b-pur" x="290" y="130" width="200" height="80" rx="10"/><text x="390" y="156" text-anchor="middle" class="t-b">Side 2 · trust policy</text><text x="390" y="176" text-anchor="middle" class="sm">trusts the account</text><text x="390" y="193" text-anchor="middle" class="mono">…:123456789012:root</text>
+      <path class="ln" d="M490 115H565" marker-end="url(#ar4)"/><text x="527" y="106" text-anchor="middle" class="sm">both ✔</text>
+      <rect class="b-green" x="570" y="60" width="170" height="110" rx="10"/><text x="655" y="88" text-anchor="middle" class="t-b">Role session</text><text x="655" y="108" text-anchor="middle" class="mono">assumed-role/</text><text x="655" y="124" text-anchor="middle" class="mono">lab-s3-elevated/</text><text x="655" y="140" text-anchor="middle" class="mono">test-viewer</text><text x="655" y="158" text-anchor="middle" class="sm">S3 full access only</text>
+    </svg>
+    <figcaption>A two-sided handshake: the role trusts the account, and the account allows this user.</figcaption>
+  </figure>
+
+  <div class="lab"><span class="tag">LAB 4 · CONSOLE</span>
+    <ol class="steps">
+      <li><b>Reset test-viewer</b>: remove <code>AmazonS3FullAccess</code> and <code>lab-upload-iam-lab-bucket</code>. Keep ReadOnly + <code>deny-delete-lab-files</code>.</li>
+      <li><b>Create role</b> → trusted entity <b>AWS account → This account</b> (in production, tick <i>Require MFA</i>) → <code>AmazonS3FullAccess</code> → name <code>lab-s3-elevated</code>.</li>
+      <li><b>Try switching</b> (incognito, as test-viewer): name at top right → <b>Switch role</b> → account <code>123456789012</code>, role <code>lab-s3-elevated</code>, display <code>Elevated</code>.<br>Result: <span class="no">❌ "Invalid information in one or more fields"</span>. That's expected; the message is vague on purpose so attackers can't probe role names.</li>
+      <li><b>Allow the user to switch</b>: inline policy <code>allow-switch-lab-s3-elevated</code> on test-viewer:
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Sid"</span>: <span class="c-s">"AllowSwitchToElevated"</span>,
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Action"</span>: <span class="c-s">"sts:AssumeRole"</span>,
+      <span class="c-k">"Resource"</span>: <span class="c-s">"arn:aws:iam::123456789012:role/lab-s3-elevated"</span>
+    }
+  ]
+}</pre></div></li>
+      <li>Switch again → the top bar shows <b>Elevated</b> in your colour. To return: click that label → <b>Switch back</b>.</li>
+    </ol>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>Try</th><th>Result</th><th>Why</th></tr>
+      <tr><td>13</td><td>Switch before step 4</td><td class="no">❌</td><td>Only one side of the handshake exists</td></tr>
+      <tr><td>14</td><td>Switch after step 4</td><td class="ok">✅</td><td>Both sides allow it</td></tr>
+      <tr><td>15</td><td>As the role: delete in <code>iam-lab</code></td><td class="ok">✅</td><td>You <b>are the role</b> now; the user's Deny doesn't come with you</td></tr>
+      <tr><td>16</td><td>As the role: IAM → Users</td><td class="no">❌</td><td>The role only has S3</td></tr>
+      <tr><td>17</td><td>Switch back → delete</td><td class="no">❌</td><td>You're test-viewer again, and the Deny is back. <i>I guessed ✅; the role's permissions <b>replace</b> yours, they don't add.</i></td></tr>
+    </table></div>
+  </div>
+
+  <h3>Normal vs elevated</h3>
+  <div class="tbl"><table>
+    <tr><th></th><th>Normal (<code>test-viewer</code>)</th><th>Elevated (wearing <code>lab-s3-elevated</code>)</th></tr>
+    <tr><td>Identity</td><td><code>user/test-viewer</code></td><td><code>assumed-role/lab-s3-elevated/test-viewer</code></td></tr>
+    <tr><td>Permissions from</td><td>The user's policies (ReadOnly, Deny, switch permission)</td><td><b>Only</b> the role's policy (S3 full)</td></tr>
+    <tr><td>Upload / delete</td><td class="no">❌</td><td class="ok">✅</td></tr>
+    <tr><td>Lasts</td><td>Until logout</td><td>1 h by default, then back to normal</td></tr>
+    <tr><td>In the logs</td><td>"test-viewer did X"</td><td>"test-viewer <b>switched into</b> lab-s3-elevated, then did X"</td></tr>
+  </table></div>
+
+  <h3>Why not just give the user the permissions directly?</h3>
+  <div class="tbl"><table>
+    <tr><th>Reason</th><th>Direct permissions</th><th>Role switching</th></tr>
+    <tr><td>Accidents</td><td>One wrong click deletes production data</td><td>Read-only by default; you have to <i>decide</i> to switch</td></tr>
+    <tr><td>Stolen password</td><td>The attacker gets full power</td><td>The attacker gets read-only; the role can require MFA</td></tr>
+    <tr><td>Audit</td><td>All actions look the same</td><td>"Switched into elevated at 17:12" is logged and can trigger alerts</td></tr>
+    <tr><td>Time limit</td><td>Forever</td><td>The session expires</td></tr>
+    <tr><td>Other accounts</td><td><b>Impossible</b></td><td>The only way to cross accounts</td></tr>
+  </table></div>
+  <div class="call prod"><b>How it's used in companies</b><p><b>On-call:</b> the role <code>prod-admin</code> trusts the account, and the group <code>OnCall</code> gets <code>sts:AssumeRole</code> on it. People join or leave the group; the role never changes.</p>
+  <p><b>Cross-account:</b> the prod account (111) has a role that trusts the login account (222); account 222 decides which of its people may use it.</p>
+  <p>Tools like Identity Center and approval workflows ("request prod access for 2 h") all use role switching underneath.</p></div>
+</section>
+
+<!-- 10 -->
+<section id="lab-oidc">
+  <span class="kicker">Section 10 · Lab</span>
+  <h2>Lab: GitHub Actions → AWS with no keys (OIDC)</h2>
+  <p>The same "hat" idea again, except this time the wearer is a <b>GitHub workflow run</b>, and it proves who it is with a <b>signed ID card</b> (an OIDC token).</p>
+
+  <figure>
+    <svg viewBox="0 0 760 270" role="img" aria-label="GitHub OIDC flow">
+      <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8892a6"/></marker></defs>
+      <rect class="b-blue" x="20" y="20" width="200" height="90" rx="10"/><text x="120" y="48" text-anchor="middle" class="t-b">1 · GitHub run</text><text x="120" y="68" text-anchor="middle" class="sm">gets a signed ID card</text><text x="120" y="86" text-anchor="middle" class="mono">sub: repo:…:ref:…/main</text>
+      <path class="ln" d="M220 65H285" marker-end="url(#ar5)"/>
+      <rect class="b-pur" x="290" y="20" width="200" height="90" rx="10"/><text x="390" y="46" text-anchor="middle" class="t-b">2 · AWS STS</text><text x="390" y="66" text-anchor="middle" class="mono">AssumeRoleWith</text><text x="390" y="82" text-anchor="middle" class="mono">WebIdentity</text>
+      <path class="ln" d="M490 65H555" marker-end="url(#ar5)"/>
+      <rect class="b-acc" x="560" y="10" width="180" height="110" rx="10"/><text x="650" y="34" text-anchor="middle" class="t-b">3 · Checks</text><text x="650" y="56" text-anchor="middle" class="sm">signature from GitHub?</text><text x="650" y="72" text-anchor="middle" class="sm">(identity provider)</text><text x="650" y="92" text-anchor="middle" class="sm">aud + sub match</text><text x="650" y="108" text-anchor="middle" class="sm">trust policy?</text>
+      <path class="ln-g" d="M650 120V160H500" marker-end="url(#ar5)"/><text x="590" y="153" class="sm">match</text>
+      <rect class="b-green" x="290" y="150" width="205" height="90" rx="10"/><text x="392" y="178" text-anchor="middle" class="t-b">4 · Temporary keys</text><text x="392" y="198" text-anchor="middle" class="sm">ASIA…, ~1 h, this run only</text>
+      <path class="ln" d="M290 195H225" marker-end="url(#ar5)"/>
+      <rect class="box" x="20" y="150" width="200" height="90" rx="10"/><text x="120" y="180" text-anchor="middle" class="t-b">5 · Deploy</text><text x="120" y="200" text-anchor="middle" class="mono">aws s3 cp index.html</text><text x="120" y="218" text-anchor="middle" class="sm">then the keys expire</text>
+    </svg>
+    <figcaption>No secret is stored in GitHub, only the role's ARN, which isn't secret.</figcaption>
+  </figure>
+
+  <div class="lab"><span class="tag">LAB 5 · AWS + GITHUB</span>
+    <ol class="steps">
+      <li><b>GitHub:</b> new private repo <code>aws-oidc-lab</code> with a README.</li>
+      <li><b>Trust GitHub's ID cards:</b> IAM → <b>Identity providers</b> → Add → OpenID Connect · URL <code>https://token.actions.githubusercontent.com</code> · audience <code>sts.amazonaws.com</code>.</li>
+      <li><b>Bucket</b> <code>oidc-lab-123456789012</code> and policy <code>oidc-lab-s3-deploy</code> (ListBucket on the bucket + PutObject on <code>/*</code>).</li>
+      <li><b>Role:</b> IAM → Roles → Create → <b>Web identity</b> → provider above · audience · GitHub org = <code>YOUR_GH_USER</code> · repo · branch <code>main</code> → attach the policy → name <code>github-actions-oidc-lab</code>.</li>
+      <li><b>Workflow:</b> add <code>.github/workflows/deploy.yml</code> (below) → commit to <code>main</code> → <b>Actions</b> tab.</li>
+    </ol>
+
+<div class="code"><span class="lang">yaml</span><pre><span class="c-k">name:</span> Deploy to S3
+
+<span class="c-k">on:</span>
+  <span class="c-k">push:</span>
+    <span class="c-k">branches:</span> [main]
+  <span class="c-k">workflow_dispatch:</span>        <span class="c-c"># adds a "Run workflow" button</span>
+
+<span class="c-k">permissions:</span>
+  <span class="c-k">id-token:</span> write           <span class="c-c"># REQUIRED: lets the run request the OIDC ID card</span>
+  <span class="c-k">contents:</span> read
+
+<span class="c-k">jobs:</span>
+  <span class="c-k">deploy:</span>
+    <span class="c-k">runs-on:</span> ubuntu-latest
+    <span class="c-k">steps:</span>
+      - <span class="c-k">uses:</span> actions/checkout@v4
+
+      - <span class="c-k">name:</span> Show OIDC card (debug)    <span class="c-c"># must come BEFORE the AWS step</span>
+        <span class="c-k">run:</span> |
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&amp;audience=sts.amazonaws.com" | jq -r .value)
+          python3 -c "import sys,json,base64;p=sys.argv[1].split('.')[1];p+='='*(-len(p)%4);c=json.loads(base64.urlsafe_b64decode(p));print(json.dumps({k:c.get(k) for k in ('sub','aud','repository','ref')},indent=2))" "$TOKEN"
+
+      - <span class="c-k">name:</span> Get AWS credentials via OIDC
+        <span class="c-k">uses:</span> aws-actions/configure-aws-credentials@v4
+        <span class="c-k">with:</span>
+          <span class="c-k">role-to-assume:</span> arn:aws:iam::123456789012:role/github-actions-oidc-lab
+          <span class="c-k">aws-region:</span> eu-central-1
+
+      - <span class="c-k">name:</span> Who am I?
+        <span class="c-k">run:</span> aws sts get-caller-identity
+
+      - <span class="c-k">name:</span> Deploy
+        <span class="c-k">run:</span> |
+          echo "Deployed by GitHub run ${{ github.run_number }} at $(date)" &gt; index.html
+          aws s3 cp index.html s3://oidc-lab-123456789012/index.html</pre></div>
+
+    <h4>The working trust policy</h4>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Version"</span>: <span class="c-s">"2012-10-17"</span>,
+  <span class="c-k">"Statement"</span>: [
+    {
+      <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+      <span class="c-k">"Principal"</span>: {
+        <span class="c-k">"Federated"</span>: <span class="c-s">"arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"</span>
+      },
+      <span class="c-k">"Action"</span>: <span class="c-s">"sts:AssumeRoleWithWebIdentity"</span>,
+      <span class="c-k">"Condition"</span>: {
+        <span class="c-k">"StringEquals"</span>: {
+          <span class="c-k">"token.actions.githubusercontent.com:aud"</span>: <span class="c-s">"sts.amazonaws.com"</span>,
+          <span class="c-k">"token.actions.githubusercontent.com:sub"</span>: <span class="c-s">"repo:YOUR_GH_USER@OWNER_ID/aws-oidc-lab@REPO_ID:ref:refs/heads/main"</span>
+        }
+      }
+    }
+  ]
+}</pre></div>
+    <div class="tbl"><table>
+      <tr><th>Part</th><th>Meaning</th></tr>
+      <tr><td><code>Federated</code></td><td>We trust an <b>outside login system</b> (GitHub)</td></tr>
+      <tr><td><code>AssumeRoleWithWebIdentity</code></td><td>The AssumeRole variant for outside ID cards</td></tr>
+      <tr><td><code>aud</code></td><td>The card must be meant for AWS STS</td></tr>
+      <tr><td><b><code>sub</code></b></td><td><b>Only this repo + branch.</b> Without it, <i>any GitHub repo in the world</i> could assume the role. This is a real misconfiguration found in many companies.</td></tr>
+    </table></div>
+
+    <h4>Success</h4>
+<div class="code"><span class="lang">output</span><pre>{
+  "UserId": "AROA…:GitHubActions",
+  "Arn": "arn:aws:sts::123456789012:assumed-role/github-actions-oidc-lab/<span class="c-g">GitHubActions</span>"
+}</pre></div>
+    <p>Repo → Settings → Secrets: <b>empty</b>. No keys anywhere, and it still deployed.</p>
+  </div>
+
+  <h3>🐛 The debugging story: 3 failures, all "Not authorized"</h3>
+  <p>Every failure showed the same unhelpful message: <code>Could not assume role with OIDC: Not authorized to perform sts:AssumeRoleWithWebIdentity</code>. That message means GitHub issued a card (so <code>id-token: write</code> was fine), but the trust policy didn't match it.</p>
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Cause</th><th>Fix</th></tr>
+    <tr><td>1</td><td>Typo: <code>aws-oidc-<b>la</b></code> instead of <code>aws-oidc-lab</code> (also listed twice)</td><td>Correct the trust policy</td></tr>
+    <tr><td>2</td><td>The debug step was placed <b>after</b> the failing AWS step, so it never ran</td><td>Move it <b>before</b></td></tr>
+    <tr><td>3</td><td><b>GitHub changed the <code>sub</code> format</b> for repos created after July 15, 2026: it now includes immutable owner and repo IDs</td><td>Copy the exact <code>sub</code> from the debug output into the trust policy</td></tr>
+  </table></div>
+<div class="code"><span class="lang">debug output</span><pre>{
+  "sub": "repo:YOUR_GH_USER<span class="c-g">@12345678</span>/aws-oidc-lab<span class="c-g">@987654321</span>:ref:refs/heads/main",
+  "aud": "sts.amazonaws.com",
+  "repository": "YOUR_GH_USER/aws-oidc-lab",
+  "ref": "refs/heads/main"
+}
+<span class="c-c">#  repo:&lt;user&gt;@&lt;owner ID&gt;/&lt;repo&gt;@&lt;repo ID&gt;:ref:refs/heads/&lt;branch&gt;</span></pre></div>
+  <div class="call lesson"><b>The debugging method that always works</b><p>Print what the caller actually sends (the token's <code>sub</code>), put it next to what the trust policy expects, and compare <b>character by character</b>. Wizards and tutorials can be out of date: the AWS wizard still wrote the old <code>sub</code> format. Searching the exact error led to the explanation (<a href="https://github.com/aws-actions/configure-aws-credentials/issues/1137">configure-aws-credentials #1137</a>).</p></div>
+  <div class="call tip"><b>Why GitHub added the IDs</b><p>If you deleted or renamed a repo, someone else could create one with the same <i>name</i> and match your trust policy. IDs can never be reused, so only that exact repo matches.</p></div>
+  <div class="call warn"><b>Other causes of the same error</b><p>Wrong case in the username (<code>StringEquals</code>/<code>StringLike</code> are case-sensitive) · branch is <code>master</code> not <code>main</code> · jobs using <code>environment:</code> get <code>…:environment:&lt;name&gt;</code> instead of <code>:ref:</code> · typo in <code>role-to-assume</code> · wrong provider URL or audience.</p><p>A wildcard like <code>repo:YOUR_GH_USER/aws-oidc-lab:*</code> (with <code>StringLike</code>) is acceptable. <b>Never use <code>repo:*</code></b>.</p></div>
+
+  <h3>Branch protection test</h3>
+  <p>Created branch <code>test</code> → Actions → Run workflow from <code>test</code> → <span class="no">❌ Not authorized</span>. The card said <code>…ref:refs/heads/test</code>, and the role only accepts <code>main</code>. <b>Only reviewed code on main can deploy.</b></p>
+  <p class="muted">Harmless warnings seen: "Node.js 20 is deprecated" and "ubuntu-latest will migrate to Ubuntu 26". These are GitHub notices, unrelated to IAM.</p>
+</section>
+
+<!-- 11 -->
+<section id="keys">
+  <span class="kicker">Section 11</span>
+  <h2>Access keys (old way) vs OIDC, and a real key leak</h2>
+  <h3>The old way, in 4 steps</h3>
+  <ol class="steps">
+    <li>IAM user <code>ci-deployer</code> with <b>no console access</b> and the same least-privilege policy.</li>
+    <li>Security credentials → <b>Create access key</b> → use case "Application running outside AWS". AWS itself shows alternatives here; the secret is shown <b>only once</b>.</li>
+    <li>GitHub → Settings → Secrets → <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code>.</li>
+    <li>Workflow:</li>
+  </ol>
+<div class="code"><span class="lang">yaml</span><pre>      - <span class="c-k">uses:</span> aws-actions/configure-aws-credentials@v4
+        <span class="c-k">with:</span>
+          <span class="c-k">aws-access-key-id:</span> ${{ secrets.AWS_ACCESS_KEY_ID }}
+          <span class="c-k">aws-secret-access-key:</span> ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          <span class="c-k">aws-region:</span> eu-central-1</pre></div>
+
+  <div class="call warn"><b>🚨 What actually happened: I leaked a real key</b>
+    <p>While testing, I pasted the real secret access key into a chat <b>twice</b>. Anything pasted into a chat, ticket, Slack or log counts as <b>leaked</b>.</p>
+    <p><b>Correct response (done):</b> IAM → user → Security credentials → key → <b>Deactivate</b> → <b>Delete</b> → verify it fails (<code>InvalidClientTokenId</code>) → <code>rm -rf ~/.aws</code> in CloudShell → check CloudTrail for what the key did → create a new key only if still needed.</p>
+    <p>With OIDC this can't happen: there's no permanent secret to paste.</p></div>
+
+  <h3>CLI errors I saw (and what they mean)</h3>
+  <div class="tbl"><table>
+    <tr><th>Error</th><th>Meaning</th></tr>
+    <tr><td><code>InvalidAccessKeyId</code> / <code>InvalidClientTokenId</code></td><td>The key ID doesn't exist (wrong field, typo) <b>or</b> the key was deactivated or deleted</td></tr>
+    <tr><td><code>SignatureDoesNotMatch</code></td><td>The key ID was recognized (<b>so the key is active</b>), but the secret is wrong, e.g. pasted twice</td></tr>
+    <tr><td><code>aws configure</code> field order</td><td>1st prompt = <code>AKIA…</code> (20 chars), 2nd = secret (40 chars)</td></tr>
+  </table></div>
+
+  <h3>Side-by-side</h3>
+  <div class="tbl"><table>
+    <tr><th></th><th>Access keys</th><th>OIDC</th></tr>
+    <tr><td>Stored in GitHub</td><td><code>AKIA…</code> + secret, <b>permanent</b></td><td><b>Nothing</b> (only the role ARN)</td></tr>
+    <tr><td>Credentials during a run</td><td>The same keys every time</td><td>Fresh <code>ASIA…</code> per run, ~1 h</td></tr>
+    <tr><td>Who AWS sees</td><td><code>user/ci-deployer</code> (<code>AIDA</code>)</td><td><code>assumed-role/…/GitHubActions</code> (<code>AROA</code>)</td></tr>
+    <tr><td>Which branch can deploy</td><td><b>Any</b> workflow that can read the secrets</td><td>Only what <code>sub</code> allows</td></tr>
+    <tr><td>Works outside GitHub if stolen</td><td><b>Yes, from anywhere</b>, until deleted</td><td>Nothing to steal</td></tr>
+    <tr><td>Rotation</td><td>Manual, and often forgotten</td><td>Automatic, every run</td></tr>
+    <tr><td>Setup</td><td>5 min</td><td>~15 min (provider + role + trust policy)</td></tr>
+  </table></div>
+  <div class="call lesson"><b>In one sentence</b><p>With keys you <b>guard a secret forever</b>; with OIDC <b>there is no secret</b>, just a trust rule saying "this repo, this branch".</p></div>
+
+  <h3>Why companies still have keys, and how to handle them</h3>
+  <p>Old pipelines, tools without OIDC support, machines outside AWS (e.g. on-prem Jenkins). GitHub Actions, GitLab, Bitbucket, CircleCI and Azure DevOps all support OIDC, so new setups should use it.</p>
+  <ul class="check">
+    <li>☑ <b>One IAM user per pipeline</b>, never a shared or personal user</li>
+    <li>☑ <b>Least privilege</b> on that user</li>
+    <li>☑ Keys only in a <b>secret store</b> (GitHub Secrets, Secrets Manager, Vault), <b>never in code</b></li>
+    <li>☑ <b>Rotate</b> (e.g. every 90 days) and check <b>"Access key last used"</b>; delete unused keys</li>
+    <li>☑ Leak → <b>deactivate immediately</b> → CloudTrail → replace</li>
+    <li>☑ <b>Plan the migration to OIDC</b></li>
+  </ul>
+</section>
+
+<!-- 12 -->
+<section id="audit">
+  <span class="kicker">Section 12</span>
+  <h2>CloudTrail &amp; auditing: who did what</h2>
+  <p><b>CloudTrail records every API call</b> (console clicks included): who, what, when, from which IP, and whether it worked.</p>
+  <div class="grid">
+    <div class="card"><div class="ico">📜</div><h4>Event history</h4><p>On by default, free, last <b>90 days</b> of <i>management events</i>. No trail needed.</p></div>
+    <div class="card"><div class="ico">📦</div><h4>Not included by default</h4><p>S3 file reads and uploads (<i>data events</i>) need a trail with data events, which costs money.</p></div>
+    <div class="card"><div class="ico">🌎</div><h4>Region tip</h4><p>IAM and sign-in events are often in <b>N. Virginia (us-east-1)</b>. If a search is empty, switch region.</p></div>
+  </div>
+  <div class="lab"><span class="tag">LAB 6 · CONSOLE</span>
+    <ol class="steps">
+      <li>CloudTrail → ☰ → <b>Event history</b>. Don't click "Create a trail"; you don't need one for this.</li>
+      <li>Filter <b>Event name</b> = <code>AssumeRoleWithWebIdentity</code> → see every GitHub run; failed ones carry an <b>error code</b>.</li>
+      <li>Open one → Event record (JSON) → read <code>userIdentity.type</code> (<code>WebIdentityUser</code>), <code>identityProvider</code>, <code>requestParameters.roleArn</code>, <code>errorCode</code>/<code>errorMessage</code>, <code>sourceIPAddress</code>.</li>
+      <li>Filter <b>AWS access key</b> = the leaked <code>AKIA…</code> → see everything it did, and from which IPs. An unknown IP would mean an attacker.</li>
+      <li>Filter <b>Event name</b> = <code>CreateAccessKey</code> / <code>DeleteAccessKey</code> → who created or removed keys, and when.</li>
+      <li>IAM → <b>Credential report</b> → Download CSV → check <code>mfa_active</code>, <code>access_key_1_last_used_date</code>, <code>password_last_used</code>.</li>
+    </ol>
+  </div>
+  <div class="call prod"><b>How companies run it</b>
+    <p>An <b>organization-wide trail</b> sends every account's logs to a locked S3 bucket in a separate <b>log-archive account</b>, kept for years.</p>
+    <p><b>Alerts</b> fire on: root login, <code>CreateAccessKey</code>, break-glass role use, <code>StopLogging</code>.</p>
+    <p>Big searches use <b>Athena</b> (SQL over the logs in S3) or CloudWatch. CloudTrail Lake closed to new customers on May 31, 2026.</p></div>
+  <p class="muted">Also useful: <b>IAM Access Analyzer</b> (finds unused permissions and resources shared outside the account) and the <b>Last accessed</b> tab on users and roles (which services were actually used).</p>
+</section>
+
+<!-- 13 -->
+<section id="advanced">
+  <span class="kicker">Section 13</span>
+  <h2>Conditions, boundaries, Identity Center, SCPs</h2>
+
+  <h3>1 · Conditions: "…but only if…"</h3>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Effect"</span>: <span class="c-s">"Allow"</span>,
+  <span class="c-k">"Action"</span>: <span class="c-s">"ec2:TerminateInstances"</span>,
+  <span class="c-k">"Resource"</span>: <span class="c-s">"*"</span>,
+  <span class="c-k">"Condition"</span>: {
+    <span class="c-k">"Bool"</span>:         { <span class="c-k">"aws:MultiFactorAuthPresent"</span>: <span class="c-s">"true"</span> },
+    <span class="c-k">"StringEquals"</span>: { <span class="c-k">"aws:ResourceTag/env"</span>: <span class="c-s">"dev"</span> }
+  }
+}</pre></div>
+  <p>Reads: "may delete servers, but <b>only</b> with MFA <b>and</b> only servers tagged <code>env=dev</code>." Keys inside one condition block are <b>AND</b>; several values for one key are <b>OR</b>.</p>
+  <div class="tbl"><table>
+    <tr><th>Condition key</th><th>Typical use</th></tr>
+    <tr><td><code>aws:MultiFactorAuthPresent</code></td><td>Dangerous actions require MFA</td></tr>
+    <tr><td><code>aws:SourceIp</code> / <code>aws:SourceVpc</code></td><td>Only from the office, VPN or our network</td></tr>
+    <tr><td><code>aws:RequestedRegion</code></td><td>Only allowed regions (e.g. EU for GDPR)</td></tr>
+    <tr><td><code>aws:ResourceTag/…</code> + <code>aws:PrincipalTag/…</code></td><td><b>ABAC</b>: team A only touches resources tagged <code>team=A</code></td></tr>
+    <tr><td><code>aws:PrincipalOrgID</code></td><td>Only identities from our own organization</td></tr>
+    <tr><td><code>iam:PassedToService</code></td><td>PassRole only to a specific service</td></tr>
+    <tr><td><code>token.actions.githubusercontent.com:sub</code></td><td>OIDC: only this repo and branch</td></tr>
+  </table></div>
+
+  <h3>2 · Permission boundaries: a ceiling</h3>
+  <p>Developers need to create roles for their Lambda functions, but must not be able to create an <i>admin</i> role. Rule: "you may create roles <b>only if</b> you attach the boundary <code>dev-boundary</code>."</p>
+  <p><b>Effective permissions = role's policy ∩ boundary.</b> Even if <code>AdministratorAccess</code> is attached, the role can only do what the boundary allows. A boundary <b>never grants</b> anything.</p>
+
+  <h3>3 · IAM Identity Center: how people really log in</h3>
+  <p>Employee → company login (Okta / Entra / Google) → AWS access portal → picks "Prod – ReadOnly" or "Dev – PowerUser" → gets a <b>temporary role session</b>.</p>
+  <ul><li><b>Permission sets</b> are templates that become a role in each account.</li><li>Offboarding happens in one place, and access is gone everywhere.</li><li>No IAM users or passwords in AWS. On the CLI: <code>aws configure sso</code>, which gives temporary keys.</li><li>As a DevOps engineer you'll use it daily as a <i>user</i>; the platform team usually sets it up.</li></ul>
+
+  <h3>4 · AWS Organizations &amp; SCPs: guardrails for whole accounts</h3>
+  <p>Organizations groups many accounts (prod, dev, logs, security) into OUs. <b>SCPs</b> set the <b>maximum for everyone in an account, even its admins</b>.</p>
+<div class="code"><span class="lang">json</span><pre>{
+  <span class="c-k">"Effect"</span>: <span class="c-r">"Deny"</span>,
+  <span class="c-k">"Action"</span>: <span class="c-s">"*"</span>,
+  <span class="c-k">"Resource"</span>: <span class="c-s">"*"</span>,
+  <span class="c-k">"Condition"</span>: {
+    <span class="c-k">"StringNotEquals"</span>: { <span class="c-k">"aws:RequestedRegion"</span>: [<span class="c-s">"eu-central-1"</span>, <span class="c-s">"eu-west-1"</span>] }
+  }
+}</pre></div>
+  <p>Other typical SCPs: deny stopping CloudTrail, deny leaving the organization, deny creating IAM users. If you see <code>…with an explicit deny in a service control policy</code>, adding permissions won't help; ask the platform team. SCPs don't apply to the management account.</p>
+
+  <h3>How everything stacks up</h3>
+  <figure>
+    <svg viewBox="0 0 760 290" role="img" aria-label="Nested permission layers">
+      <rect class="b-red" x="20" y="15" width="720" height="260" rx="16"/><text x="40" y="42" class="t-b">SCP: organization guardrail (ceiling for the whole account)</text>
+      <rect class="b-acc" x="50" y="58" width="660" height="200" rx="14"/><text x="70" y="84" class="t-b">Permission boundary: ceiling for this identity (optional)</text>
+      <rect class="b-blue" x="80" y="100" width="600" height="140" rx="12"/><text x="100" y="126" class="t-b">Identity policy (+ resource policy): what's actually granted</text>
+      <rect class="b-green" x="110" y="142" width="540" height="80" rx="10"/><text x="380" y="172" text-anchor="middle" class="t-b">Session policy (optional) = what you can REALLY do</text><text x="380" y="196" text-anchor="middle" class="sm">and any explicit Deny in any layer = blocked</text>
+    </svg>
+    <figcaption>Only the overlap of all layers is allowed.</figcaption>
+  </figure>
+</section>
+
+<!-- 14 -->
+<section id="prod">
+  <span class="kicker">Section 14</span>
+  <h2>Production checklist</h2>
+  <ul class="check">
+    <li>☑ <b>Multi-account</b> with AWS Organizations: prod / staging / dev / security / log-archive</li>
+    <li>☑ <b>Identity Center (SSO)</b> for all humans, and no IAM users for people</li>
+    <li>☑ <b>Root</b>: hardware MFA, no access keys, used only for break-glass; alert on root login</li>
+    <li>☑ <b>Roles for every workload</b>: EC2 instance profiles, Lambda execution roles, ECS task roles, EKS Pod Identity / IRSA</li>
+    <li>☑ <b>OIDC for CI/CD</b>, with <code>sub</code> locked to repo + branch or environment</li>
+    <li>☑ <b>Least privilege</b>: customer-managed policies with exact ARNs; Access Analyzer to trim unused permissions</li>
+    <li>☑ <b><code>iam:PassRole</code></b> limited to specific roles + <code>iam:PassedToService</code></li>
+    <li>☑ <b>Permission boundaries</b> where developers create roles</li>
+    <li>☑ <b>SCP guardrails</b>: regions, CloudTrail protection, no leaving the org</li>
+    <li>☑ <b>IMDSv2 enforced</b> on all EC2 instances</li>
+    <li>☑ <b>Org-wide CloudTrail</b> to a locked bucket, plus alerts</li>
+    <li>☑ <b>IAM as code</b> (Terraform / CloudFormation) reviewed through pull requests; no console changes in prod</li>
+    <li>☑ Regular <b>credential report</b> review: MFA, old keys, unused users</li>
+  </ul>
+</section>
+
+<!-- 15 -->
+<section id="mistakes">
+  <span class="kicker">Section 15</span>
+  <h2>Common mistakes (several of them mine)</h2>
+  <div class="tbl"><table>
+    <tr><th>Mistake</th><th>Symptom</th><th>Fix</th></tr>
+    <tr><td>Typo in an action (<code>s3:PutObjec</code>)</td><td>Silently allows nothing</td><td>Use the editor's validation and Access Analyzer policy checks</td></tr>
+    <tr><td><code>bucket:*</code> or missing <code>/*</code></td><td>AccessDenied on files</td><td>Bucket ARN for List, <code>bucket/*</code> for Get/Put/Delete</td></tr>
+    <tr><td>Guessing a Deny covers more than its Resource</td><td>Unexpected ✅</td><td>A Deny only matches its own Action + Resource</td></tr>
+    <tr><td>Thinking a role adds to your permissions</td><td>Unexpected ❌ / ✅</td><td>A role <b>replaces</b> your permissions while you wear it</td></tr>
+    <tr><td>Trust policy typo (<code>aws-oidc-la</code>)</td><td>"Not authorized to perform sts:AssumeRole…"</td><td>Compare the caller's <code>sub</code> with the policy character by character</td></tr>
+    <tr><td>Debug step after the failing step</td><td>Debug output never appears</td><td>Put diagnostics before the step that fails</td></tr>
+    <tr><td>Trusting an out-of-date wizard or tutorial</td><td>Correct-looking config fails</td><td>Search the exact error; check recent changelogs and issues</td></tr>
+    <tr><td><code>"Action": "*", "Resource": "*"</code> for apps</td><td>Huge damage if compromised</td><td>Least privilege</td></tr>
+    <tr><td><code>"Principal": "*"</code> or <code>repo:*</code></td><td>Anyone can use it</td><td>Always name the exact principal or repo</td></tr>
+    <tr><td>Pasting secrets into chats or logs</td><td>A real leak</td><td>Deactivate → delete → CloudTrail → replace</td></tr>
+    <tr><td>Expecting IAM changes to apply instantly</td><td>A brief AccessDenied right after a change</td><td>Eventual consistency: wait a few seconds</td></tr>
+    <tr><td>Values in the wrong <code>aws configure</code> fields</td><td><code>InvalidAccessKeyId</code> / <code>SignatureDoesNotMatch</code></td><td>Key ID (AKIA, 20 chars) first, then the secret (40 chars)</td></tr>
+  </table></div>
+</section>
+
+<!-- 16 -->
+<section id="interview">
+  <span class="kicker">Section 16</span>
+  <h2>Interview Q&amp;A</h2>
+  <details><summary>User vs role?</summary><p>A user is a permanent identity with long-term credentials (password / <code>AKIA</code> keys). A role has no credentials of its own; it's assumed temporarily and STS issues short-lived <code>ASIA</code> keys.</p></details>
+  <details><summary>Trust policy vs permissions policy?</summary><p>The trust policy (resource-based, with a <code>Principal</code>) says <b>who</b> can assume the role. The permissions policy says <b>what</b> the role can do. Both must allow it.</p></details>
+  <details><summary>How does AWS evaluate a request?</summary><p>Default implicit deny → if any explicit Deny matches, it's denied → otherwise, if an Allow matches (and SCPs, boundaries and session policies permit it), it's allowed → otherwise denied.</p></details>
+  <details><summary>Implicit vs explicit deny, and how do you tell them apart?</summary><p>Implicit: nothing allowed it ("no identity-based policy allows"), so you add the permission. Explicit: a Deny statement matched ("with an explicit deny in …"), so you have to change the Deny or SCP itself.</p></details>
+  <details><summary>How does an app on EC2 get AWS credentials?</summary><p>Through an IAM role attached via an instance profile. The EC2 service assumes the role and serves temporary, auto-rotating keys through the metadata service (169.254.169.254) with IMDSv2 enforced. The SDK picks them up automatically, so nothing is stored.</p></details>
+  <details><summary>What is iam:PassRole and why does it exist?</summary><p>The permission to attach a role to a service (EC2, Lambda, ECS…). It's checked on the person doing the attaching, and it prevents privilege escalation (a limited user attaching an admin role to their own server or function). Restrict it to specific role ARNs and <code>iam:PassedToService</code>.</p></details>
+  <details><summary>How do you give access to another account?</summary><p>Create a role in the target account whose trust policy trusts the source account (or a specific role in it). The source account grants <code>sts:AssumeRole</code> on that role to the right group. Policies can't be attached across accounts.</p></details>
+  <details><summary>How do you give a CI pipeline access to AWS?</summary><p>Preferably OIDC: an IAM OIDC identity provider for the CI system and a role trusting <code>AssumeRoleWithWebIdentity</code>, with <code>aud</code> and <code>sub</code> conditions pinned to the repo and branch or environment, so there are no long-lived keys. If OIDC isn't supported: a dedicated least-privilege user, keys in a secret store, rotated and monitored, with a migration plan.</p></details>
+  <details><summary>What does <code>arn:aws:iam::123456789012:root</code> mean in a trust policy?</summary><p>The whole account, not the root user. That account's own IAM policies decide which identities may assume the role.</p></details>
+  <details><summary>An access key leaked. What do you do?</summary><p>Deactivate it immediately, check CloudTrail (filter by access key ID) for what it did and from where, remediate any damage, delete it, issue a replacement only if needed, find out how it leaked, and move to roles or OIDC.</p></details>
+  <details><summary>Permission boundary vs SCP?</summary><p>Both only cap permissions and never grant. A boundary caps one user or role (e.g. roles that developers create). An SCP caps every identity in an account or OU, including admins, but not the management account.</p></details>
+  <details><summary>What are AKIA / ASIA / AIDA / AROA?</summary><p>AKIA = long-term access key · ASIA = temporary STS key · AIDA = IAM user ID · AROA = IAM role ID.</p></details>
+  <details><summary>Why IMDSv2?</summary><p>It requires a PUT to obtain a session token before credentials can be read, which blocks SSRF attacks that trick an app into fetching instance credentials (the Capital One 2019 breach).</p></details>
+  <details><summary>Who did what in my account?</summary><p>CloudTrail: Event history for the last 90 days of management events; an org-wide trail to S3 for long-term storage, queried with Athena. S3 object-level actions need data events enabled.</p></details>
+</section>
+
+<!-- 17 -->
+<section id="cheat">
+  <span class="kicker">Section 17</span>
+  <h2>Cheat sheet &amp; glossary</h2>
+  <h3>Handy CLI</h3>
+<div class="code"><span class="lang">bash</span><pre><span class="c-c"># Who am I right now? (user, role session, which account)</span>
+aws sts get-caller-identity
+
+<span class="c-c"># Assume a role manually and see the temporary keys</span>
+aws sts assume-role --role-arn arn:aws:iam::123456789012:role/NAME --role-session-name test
+
+<span class="c-c"># Use a role via a profile (~/.aws/config)</span>
+<span class="c-c"># [profile elevated]</span>
+<span class="c-c"># role_arn = arn:aws:iam::123456789012:role/lab-s3-elevated</span>
+<span class="c-c"># source_profile = default</span>
+aws s3 ls --profile elevated
+
+<span class="c-c"># Test a policy without trying it for real</span>
+aws iam simulate-principal-policy \
+  --policy-source-arn arn:aws:iam::123456789012:user/test-viewer \
+  --action-names s3:DeleteObject \
+  --resource-arns arn:aws:s3:::iam-lab-123456789012/file.txt
+
+<span class="c-c"># Credential report</span>
+aws iam generate-credential-report &amp;&amp; aws iam get-credential-report --query Content --output text | base64 -d
+
+<span class="c-c"># Company SSO login on the CLI</span>
+aws configure sso</pre></div>
+
+  <h3>Cleanup checklist (labs)</h3>
+  <ul class="check">
+    <li>☑ Users <code>test-viewer</code>, <code>ci-deployer</code> (and any access keys)</li>
+    <li>☑ Roles <code>lab-ec2-s3-reader</code>, <code>lab-s3-elevated</code>, <code>github-actions-oidc-lab</code></li>
+    <li>☑ Customer policies <code>lab-upload-…</code>, <code>lab-read-…</code>, <code>oidc-lab-s3-deploy</code></li>
+    <li>☑ Identity provider <code>token.actions.githubusercontent.com</code> (if not reused)</li>
+    <li>☑ Buckets <code>iam-lab-…</code>, <code>iam-lab-2-…</code>, <code>oidc-lab-…</code> (Empty → Delete)</li>
+    <li>☑ EC2 instance terminated, security group <code>launch-wizard-1</code> deleted</li>
+    <li>☑ GitHub secrets removed · CloudShell <code>rm -rf ~/.aws</code></li>
+    <li>☑ <b>Keep</b>: <code>my-admin</code>, the <code>Admins</code> group, MFA on root + admin</li>
+  </ul>
+
+  <h3>Glossary</h3>
+  <div class="tbl"><table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>Principal</td><td>Who is making the request or who is trusted (user, role, service, account, federated identity)</td></tr>
+    <tr><td>ARN</td><td>Amazon Resource Name, the unique address of anything in AWS</td></tr>
+    <tr><td>STS</td><td>Security Token Service, which issues temporary credentials</td></tr>
+    <tr><td>AssumeRole</td><td>"Put on the hat": exchange your identity for a role session</td></tr>
+    <tr><td>Instance profile</td><td>The wrapper that lets an EC2 instance hold a role</td></tr>
+    <tr><td>IMDS / IMDSv2</td><td>The instance metadata service at 169.254.169.254; v2 requires a session token</td></tr>
+    <tr><td>OIDC</td><td>OpenID Connect: an outside system (GitHub) issues signed identity tokens AWS can trust</td></tr>
+    <tr><td><code>sub</code> / <code>aud</code> claims</td><td>Token fields: who the token is about (repo/branch) / who it's meant for (sts.amazonaws.com)</td></tr>
+    <tr><td>Least privilege</td><td>Grant only the exact actions on the exact resources that are needed</td></tr>
+    <tr><td>Implicit deny</td><td>Blocked because nothing allowed it</td></tr>
+    <tr><td>Explicit deny</td><td>Blocked by a matching Deny statement, which always wins</td></tr>
+    <tr><td>ABAC</td><td>Attribute-based access control using tags</td></tr>
+    <tr><td>Permission boundary</td><td>A maximum-permissions cap on a user or role</td></tr>
+    <tr><td>SCP</td><td>Service control policy, an account-wide cap in Organizations</td></tr>
+    <tr><td>Identity Center</td><td>AWS SSO: central login for people, using permission sets → roles</td></tr>
+    <tr><td>Break-glass</td><td>An emergency high-privilege role or user, monitored and alerted</td></tr>
+  </table></div>
+</section>
+
+<footer>AWS Notes · Chapter 1 · IAM · Written after hands-on labs on 15 Nov 2026 · Next chapter: EC2</footer>
+</main>
+
+<script>
+// theme toggle (remembered per browser)
+(function(){
+  var root=document.documentElement, key='awsnotes-theme';
+  try{var saved=localStorage.getItem(key); if(saved) root.setAttribute('data-theme',saved);
+      else if(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme','dark');}catch(e){}
+  document.getElementById('theme').addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next); try{localStorage.setItem(key,next)}catch(e){}
+  });
+})();
+// copy buttons
+document.querySelectorAll('.code').forEach(function(box){
+  var b=document.createElement('button'); b.className='copy'; b.textContent='Copy';
+  b.addEventListener('click',function(){
+    var t=box.querySelector('pre').innerText;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied ✓'},function(){
+      var r=document.createRange(); r.selectNodeContents(box.querySelector('pre')); var s=getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent='Selected';
+    });
+    setTimeout(function(){b.textContent='Copy'},1500);
+  });
+  box.appendChild(b);
+});
+// active section in sidebar
+var links=[].slice.call(document.querySelectorAll('#toc a'));
+var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('main section[id]').forEach(function(s){obs.observe(s)});
+links.forEach(function(l){l.addEventListener('click',function(){document.body.classList.remove('nav-open')})});
+</script>
+</body>
+</html>
